@@ -1,0 +1,147 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ImageLabeller.ViewModels"
+             xmlns:models="using:ImageLabeller.Models"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="ImageLabeller.Views.ClassesView"
+             x:DataType="vm:ClassesViewModel">
+    <Grid RowDefinitions="Auto,*" Margin="20">
+        <!-- Top: Add/Edit Section -->
+        <Border Grid.Row="0"
+                BorderBrush="#3F3F46"
+                BorderThickness="1"
+                Background="#1E1E1E"
+                Padding="15"
+                Margin="0,0,0,15">
+            <StackPanel Spacing="10">
+                <TextBlock Text="Add New Class"
+                          FontSize="16"
+                          FontWeight="Bold"
+                          IsVisible="{Binding !IsEditing}"/>
+                <TextBlock Text="Edit Class"
+                          FontSize="16"
+                          FontWeight="Bold"
+                          IsVisible="{Binding IsEditing}"/>
+
+                <Grid ColumnDefinitions="*,Auto,Auto">
+                    <TextBox Grid.Column="0"
+                            Text="{Binding NewClassName}"
+                            Watermark="Enter class name..."
+                            Padding="5,8"
+                            FontSize="14"/>
+
+                    <!-- Add Button -->
+                    <Button Grid.Column="1"
+                           Content="Add"
+                           Command="{Binding AddClassCommand}"
+                           Width="100"
+                           Padding="5,8"
+                           Margin="10,0,0,0"
+                           IsVisible="{Binding !IsEditing}"/>
+
+                    <Button Grid.Column="1"
+                           Content="Save"
+                           Command="{Binding SaveEditCommand}"
+                           Width="100"
+                           Padding="5,8"
+                           Margin="10,0,0,0"
+                           IsVisible="{Binding IsEditing}"/>
+
+                    <!-- Cancel Button (only in edit mode) -->
+                    <Button Grid.Column="2"
+                           Content="Cancel"
+                           Command="{Binding CancelEditCommand}"
+                           Width="100"
+                           Padding="5,8"
+                           Margin="10,0,0,0"
+                           IsVisible="{Binding IsEditing}"/>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!-- Bottom: Class List -->
+        <Border Grid.Row="1"
+                BorderBrush="#3F3F46"
+                BorderThickness="1"
+                Background="#1E1E1E">
+            <ScrollViewer>
+                <ItemsControl ItemsSource="{Binding Classes}"
+                             Margin="5">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="models:ClassItem">
+                            <Border BorderBrush="#2D2D30"
+                                   BorderThickness="0,0,0,1"
+                                   Padding="5"
+                                   Margin="0">
+                                <Grid ColumnDefinitions="60,Auto,*,Auto,Auto,Auto,Auto">
+                                    <!-- Index -->
+                                    <TextBlock Grid.Column="0"
+                                              Text="{Binding Index}"
+                                              FontSize="16"
+                                              FontWeight="Bold"
+                                              Foreground="#808080"
+                                              VerticalAlignment="Center"/>
+
+                                    <!-- Color Indicator -->
+                                    <Border Grid.Column="1"
+                                           Width="20"
+                                           Height="20"
+                                           Background="{Binding Color}"
+                                           BorderBrush="#FFFFFF"
+                                           BorderThickness="1"
+                                           CornerRadius="3"
+                                           Margin="0,0,15,0"
+                                           VerticalAlignment="Center"/>
+
+                                    <!-- Name -->
+                                    <TextBlock Grid.Column="2"
+                                              Text="{Binding Name}"
+                                              FontSize="16"
+                                              VerticalAlignment="Center"/>
+
+                                    <!-- Edit Button -->
+                                    <Button Grid.Column="3"
+                                           Content="Edit"
+                                           Command="{Binding $parent[UserControl].((vm:ClassesViewModel)DataContext).EditClassCommand}"
+                                           CommandParameter="{Binding}"
+                                           Width="80"
+                                           Padding="8,6"
+                                           Margin="0,0,5,0"/>
+
+                                    <!-- Delete Button -->
+                                    <Button Grid.Column="4"
+                                           Content="Delete"
+                                           Command="{Binding $parent[UserControl].((vm:ClassesViewModel)DataContext).DeleteClassCommand}"
+                                           CommandParameter="{Binding}"
+                                           Width="80"
+                                           Padding="8,6"
+                                           Margin="5,0"/>
+
+                                    <!-- Move Up Button -->
+                                    <Button Grid.Column="5"
+                                           Content="↑"
+                                           Command="{Binding $parent[UserControl].((vm:ClassesViewModel)DataContext).MoveUpCommand}"
+                                           CommandParameter="{Binding}"
+                                           Width="40"
+                                           Padding="8,6"
+                                           Margin="5,0"/>
+
+                                    <!-- Move Down Button -->
+                                    <Button Grid.Column="6"
+                                           Content="↓"
+                                           Command="{Binding $parent[UserControl].((vm:ClassesViewModel)DataContext).MoveDownCommand}"
+                                           CommandParameter="{Binding}"
+                                           Width="40"
+                                           Padding="8,6"
+                                           Margin="5,0,0,0"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

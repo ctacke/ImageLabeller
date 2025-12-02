@@ -28,7 +28,21 @@ namespace ImageLabeller.Services
                 if (File.Exists(_settingsPath))
                 {
                     var json = File.ReadAllText(_settingsPath);
-                    return JsonSerializer.Deserialize<UserSettings>(json) ?? new UserSettings();
+                    var settings = JsonSerializer.Deserialize<UserSettings>(json) ?? new UserSettings();
+
+                    // Migration: Initialize ClassNames if null or empty (for existing settings files)
+                    if (settings.ClassNames == null || settings.ClassNames.Count == 0)
+                    {
+                        settings.ClassNames = new System.Collections.Generic.List<string>
+                        {
+                            "15", "20", "25", "30", "35", "40", "45", "50",
+                            "55", "60", "65", "70", "75", "80"
+                        };
+                        // Save updated settings with defaults
+                        Save(settings);
+                    }
+
+                    return settings;
                 }
             }
             catch (Exception ex)

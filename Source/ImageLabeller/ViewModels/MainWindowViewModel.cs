@@ -7,6 +7,7 @@ namespace ImageLabeller.ViewModels
     public class MainWindowViewModel : ViewModelBase
     {
         private ViewModelBase? _currentView;
+        private readonly ClassesViewModel _classesViewModel;
         private readonly SortViewModel _sortViewModel;
         private readonly LabelViewModel _labelViewModel;
         private readonly SettingsService _settingsService;
@@ -20,6 +21,7 @@ namespace ImageLabeller.ViewModels
             {
                 if (SetProperty(ref _currentView, value))
                 {
+                    OnPropertyChanged(nameof(IsClassesViewActive));
                     OnPropertyChanged(nameof(IsSortViewActive));
                     OnPropertyChanged(nameof(IsLabelViewActive));
                     SaveCurrentView();
@@ -27,9 +29,11 @@ namespace ImageLabeller.ViewModels
             }
         }
 
+        public bool IsClassesViewActive => CurrentView == _classesViewModel;
         public bool IsSortViewActive => CurrentView == _sortViewModel;
         public bool IsLabelViewActive => CurrentView == _labelViewModel;
 
+        public ICommand NavigateToClasses { get; }
         public ICommand NavigateToSort { get; }
         public ICommand NavigateToLabel { get; }
 
@@ -39,8 +43,17 @@ namespace ImageLabeller.ViewModels
             Settings = _settingsService.Load();
 
             // Create view models once and reuse them
+            _classesViewModel = new ClassesViewModel(this);
             _sortViewModel = new SortViewModel(this);
             _labelViewModel = new LabelViewModel(this);
+
+            NavigateToClasses = new RelayCommand(() =>
+            {
+                if (CurrentView != _classesViewModel)
+                {
+                    CurrentView = _classesViewModel;
+                }
+            });
 
             NavigateToSort = new RelayCommand(() =>
             {
@@ -66,6 +79,7 @@ namespace ImageLabeller.ViewModels
         {
             CurrentView = Settings.LastActiveView switch
             {
+                "Classes" => _classesViewModel,
                 "Label" => _labelViewModel,
                 _ => _sortViewModel
             };
@@ -73,7 +87,11 @@ namespace ImageLabeller.ViewModels
 
         private void SaveCurrentView()
         {
-            if (CurrentView == _sortViewModel)
+            if (CurrentView == _classesViewModel)
+            {
+                Settings.LastActiveView = "Classes";
+            }
+            else if (CurrentView == _sortViewModel)
             {
                 Settings.LastActiveView = "Sort";
             }
@@ -88,6 +106,12 @@ namespace ImageLabeller.ViewModels
         public void SaveSettings()
         {
             _settingsService.Save(Settings);
+        }
+
+        public void NotifyClassesChanged()
+        {
+            _sortViewModel.RefreshClasses();
+            _labelViewModel.RefreshClasses();
         }
     }
 }

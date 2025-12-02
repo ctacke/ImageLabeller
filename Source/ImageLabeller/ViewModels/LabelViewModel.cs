@@ -10,23 +10,13 @@ namespace ImageLabeller.ViewModels
 {
     public class LabelViewModel : ViewModelBase
     {
-        // Speed limit classes with colors (for labeling)
-        private static readonly ImageClass[] SpeedLimitClasses = new[]
+        // Color palette for auto-assigning colors to classes
+        private static readonly string[] ColorPalette = new[]
         {
-            new ImageClass(0, "15", "#FF6B6B"),
-            new ImageClass(1, "20", "#4ECDC4"),
-            new ImageClass(2, "25", "#45B7D1"),
-            new ImageClass(3, "30", "#96CEB4"),
-            new ImageClass(4, "35", "#FFEAA7"),
-            new ImageClass(5, "40", "#DFE6E9"),
-            new ImageClass(6, "45", "#74B9FF"),
-            new ImageClass(7, "50", "#A29BFE"),
-            new ImageClass(8, "55", "#FD79A8"),
-            new ImageClass(9, "60", "#FDCB6E"),
-            new ImageClass(10, "65", "#6C5CE7"),
-            new ImageClass(11, "70", "#00B894"),
-            new ImageClass(12, "75", "#E17055"),
-            new ImageClass(13, "80", "#D63031")
+            "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4",
+            "#FFEAA7", "#DFE6E9", "#74B9FF", "#A29BFE",
+            "#FD79A8", "#FDCB6E", "#6C5CE7", "#00B894",
+            "#E17055", "#D63031", "#F39C12", "#8E44AD"
         };
 
         private static readonly string[] SupportedExtensions = { ".jpg", ".jpeg", ".png" };
@@ -79,7 +69,22 @@ namespace ImageLabeller.ViewModels
 
         public string CurrentClassLabel => $"Current Class: {SelectedClass.Id} - {SelectedClass.Name}";
 
-        public ImageClass[] ImageClasses => SpeedLimitClasses;
+        public ImageClass[] ImageClasses
+        {
+            get
+            {
+                if (_mainViewModel == null)
+                    return Array.Empty<ImageClass>();
+
+                return _mainViewModel.Settings.ClassNames
+                    .Select((name, index) => new ImageClass(
+                        index,
+                        name,
+                        ColorPalette[index % ColorPalette.Length]
+                    ))
+                    .ToArray();
+            }
+        }
 
         public List<YoloAnnotation> CurrentAnnotations
         {
@@ -98,19 +103,22 @@ namespace ImageLabeller.ViewModels
         public LabelViewModel(MainWindowViewModel? mainViewModel = null)
         {
             _mainViewModel = mainViewModel;
-            _selectedClass = SpeedLimitClasses[0];
 
             BrowseSourceFolderCommand = new RelayCommand(() => { });
             SelectClassCommand = new RelayCommand<ImageClass>(SelectClass!);
             NextImageCommand = new RelayCommand(NavigateNext, () => HasNextImage);
             PreviousImageCommand = new RelayCommand(NavigatePrevious, () => HasPreviousImage);
 
+            // Initialize selected class
+            var classes = ImageClasses;
+            _selectedClass = classes.Length > 0 ? classes[0] : new ImageClass(0, "Unknown", "#808080");
+
             // Load saved settings
             if (_mainViewModel != null)
             {
                 _sourceFolderPath = _mainViewModel.Settings.LabelSourceFolder;
                 var savedClassId = _mainViewModel.Settings.LabelSelectedClassId;
-                _selectedClass = SpeedLimitClasses.FirstOrDefault(c => c.Id == savedClassId) ?? SpeedLimitClasses[0];
+                _selectedClass = ImageClasses.FirstOrDefault(c => c.Id == savedClassId) ?? _selectedClass;
 
                 // Load images if source folder exists
                 if (!string.IsNullOrEmpty(_sourceFolderPath))
@@ -286,7 +294,20 @@ namespace ImageLabeller.ViewModels
 
         public ImageClass? GetClassById(int classId)
         {
-            return SpeedLimitClasses.FirstOrDefault(c => c.Id == classId);
+            return ImageClasses.FirstOrDefault(c => c.Id == classId);
+        }
+
+        public void RefreshClasses()
+        {
+            OnPropertyChanged(nameof(ImageClasses));
+            OnPropertyChanged(nameof(CurrentClassLabel));
+
+            // Re-validate selected class
+            var classes = ImageClasses;
+            if (classes.Length > 0 && !classes.Any(c => c.Id == SelectedClass.Id))
+            {
+                SelectedClass = classes[0];
+            }
         }
     }
 }

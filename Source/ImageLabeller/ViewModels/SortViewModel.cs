@@ -9,17 +9,21 @@ namespace ImageLabeller.ViewModels
 {
     public class SortViewModel : ViewModelBase
     {
-        // Static array of classification classes
-        private static readonly string[] ClassificationClasses = new[]
-        {
-            "none", "15", "20", "25", "30", "35", "40", "45", "50",
-            "55", "60", "65", "70", "75", "80"
-        };
-
         private static readonly string[] SupportedExtensions = { ".jpg", ".jpeg", ".png" };
 
-        // Instance property for binding
-        public string[] ImageClasses => ClassificationClasses;
+        // Dynamic property for binding - builds from settings
+        public string[] ImageClasses
+        {
+            get
+            {
+                var classes = new List<string> { "none" };
+                if (_mainViewModel != null)
+                {
+                    classes.AddRange(_mainViewModel.Settings.ClassNames);
+                }
+                return classes.ToArray();
+            }
+        }
 
         private string _sourceFolderPath = string.Empty;
         private string _destinationFolderPath = string.Empty;
@@ -331,6 +335,11 @@ namespace ImageLabeller.ViewModels
                 _mainViewModel.Settings.SortDestinationFolder = _destinationFolderPath;
                 _mainViewModel.SaveSettings();
             }
+        }
+
+        public void RefreshClasses()
+        {
+            OnPropertyChanged(nameof(ImageClasses));
         }
     }
 }

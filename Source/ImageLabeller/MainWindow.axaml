@@ -11,6 +11,9 @@
         Width="1200" Height="700">
 
     <Window.DataTemplates>
+        <DataTemplate DataType="vm:ClassesViewModel">
+            <views:ClassesView/>
+        </DataTemplate>
         <DataTemplate DataType="vm:SortViewModel">
             <views:SortView/>
         </DataTemplate>
@@ -31,6 +34,14 @@
                           FontWeight="Bold"
                           Foreground="#808080"
                           Margin="20,0,0,10"/>
+
+                <Button Content="Classes"
+                        Command="{Binding NavigateToClasses}"
+                        Classes="MenuButton"
+                        Classes.Selected="{Binding IsClassesViewActive}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left"
+                        Padding="20,12"/>
 
                 <Button Content="Sort"
                         Command="{Binding NavigateToSort}"
