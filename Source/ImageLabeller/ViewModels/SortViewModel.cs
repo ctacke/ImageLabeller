@@ -38,6 +38,7 @@ namespace ImageLabeller.ViewModels
                 if (SetProperty(ref _sourceFolderPath, value))
                 {
                     LoadImagesFromSource();
+                    SaveFolderSettings();
                 }
             }
         }
@@ -50,6 +51,7 @@ namespace ImageLabeller.ViewModels
                 if (SetProperty(ref _destinationFolderPath, value))
                 {
                     UpdateNavigationState();
+                    SaveFolderSettings();
                 }
             }
         }
@@ -82,13 +84,30 @@ namespace ImageLabeller.ViewModels
         public ICommand NextImageCommand { get; }
         public ICommand PreviousImageCommand { get; }
 
-        public SortViewModel()
+        private MainWindowViewModel? _mainViewModel;
+
+        public SortViewModel(MainWindowViewModel? mainViewModel = null)
         {
+            _mainViewModel = mainViewModel;
+
             BrowseSourceFolderCommand = new RelayCommand(() => { });
             BrowseDestinationFolderCommand = new RelayCommand(() => { });
             ClassifyImageCommand = new RelayCommand<string>(MoveImageToClass, _ => CanClassify);
             NextImageCommand = new RelayCommand(NavigateNext, () => HasNextImage);
             PreviousImageCommand = new RelayCommand(NavigatePrevious, () => HasPreviousImage);
+
+            // Load saved folder paths
+            if (_mainViewModel != null)
+            {
+                _sourceFolderPath = _mainViewModel.Settings.SortSourceFolder;
+                _destinationFolderPath = _mainViewModel.Settings.SortDestinationFolder;
+
+                // Load images if source folder exists
+                if (!string.IsNullOrEmpty(_sourceFolderPath))
+                {
+                    LoadImagesFromSource();
+                }
+            }
         }
 
         public void SetFolderPickerCallback(Func<string?> browseSourceFolder, Func<string?> browseDestinationFolder)
@@ -302,6 +321,16 @@ namespace ImageLabeller.ViewModels
             (ClassifyImageCommand as RelayCommand<string>)?.RaiseCanExecuteChanged();
             (NextImageCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (PreviousImageCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        }
+
+        private void SaveFolderSettings()
+        {
+            if (_mainViewModel != null)
+            {
+                _mainViewModel.Settings.SortSourceFolder = _sourceFolderPath;
+                _mainViewModel.Settings.SortDestinationFolder = _destinationFolderPath;
+                _mainViewModel.SaveSettings();
+            }
         }
     }
 }
