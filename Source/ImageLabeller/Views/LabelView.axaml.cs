@@ -20,6 +20,9 @@ namespace ImageLabeller.Views
         private bool _isDrawing;
         private LabelViewModel? _viewModel;
         private System.Collections.ObjectModel.ObservableCollection<Models.YoloAnnotation>? _subscribedCollection;
+        private const double MinZoom = 0.1;
+        private const double MaxZoom = 10.0;
+        private const double ZoomStep = 0.1;
 
         public LabelView()
         {
@@ -40,6 +43,27 @@ namespace ImageLabeller.Views
             {
                 viewModel.DeleteAnnotation(viewModel.SelectedAnnotation);
                 e.Handled = true;
+                return;
+            }
+
+            // Handle Left/Right arrow keys for navigation
+            if (e.Key == Key.Left)
+            {
+                if (viewModel.PreviousImageCommand.CanExecute(null))
+                {
+                    viewModel.PreviousImageCommand.Execute(null);
+                    e.Handled = true;
+                }
+                return;
+            }
+
+            if (e.Key == Key.Right)
+            {
+                if (viewModel.NextImageCommand.CanExecute(null))
+                {
+                    viewModel.NextImageCommand.Execute(null);
+                    e.Handled = true;
+                }
                 return;
             }
 
@@ -130,8 +154,13 @@ namespace ImageLabeller.Views
                 SubscribeToAnnotationsCollection();
                 RedrawAnnotations();
             }
-            else if (e.PropertyName == nameof(LabelViewModel.CurrentImage) ||
-                e.PropertyName == nameof(LabelViewModel.SelectedAnnotation))
+            else if (e.PropertyName == nameof(LabelViewModel.CurrentImage))
+            {
+                // Reset zoom when a new image is loaded
+                ResetZoom();
+                RedrawAnnotations();
+            }
+            else if (e.PropertyName == nameof(LabelViewModel.SelectedAnnotation))
             {
                 RedrawAnnotations();
             }
@@ -143,6 +172,28 @@ namespace ImageLabeller.Views
             {
                 // Update button states when classes are refreshed
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => UpdateClassButtonStates(), Avalonia.Threading.DispatcherPriority.Loaded);
+            }
+        }
+
+        private void ResetZoom()
+        {
+            var zoomContainer = this.FindControl<Grid>("ZoomContainer");
+            if (zoomContainer?.RenderTransform is TransformGroup transformGroup)
+            {
+                var scaleTransform = transformGroup.Children.OfType<ScaleTransform>().FirstOrDefault();
+                var translateTransform = transformGroup.Children.OfType<TranslateTransform>().FirstOrDefault();
+
+                if (scaleTransform != null)
+                {
+                    scaleTransform.ScaleX = 1.0;
+                    scaleTransform.ScaleY = 1.0;
+                }
+
+                if (translateTransform != null)
+                {
+                    translateTransform.X = 0;
+                    translateTransform.Y = 0;
+                }
             }
         }
 
@@ -170,6 +221,62 @@ namespace ImageLabeller.Views
         private void OnCanvasSizeChanged(object? sender, SizeChangedEventArgs e)
         {
             RedrawAnnotations();
+        }
+
+        private void OnImagePointerWheelChanged(object? sender, PointerWheelEventArgs e)
+        {
+            // Only zoom if Ctrl is pressed
+            if (!e.KeyModifiers.HasFlag(KeyModifiers.Control))
+                return;
+
+            var scrollViewer = this.FindControl<ScrollViewer>("ImageScrollViewer");
+            var zoomContainer = this.FindControl<Grid>("ZoomContainer");
+
+            if (scrollViewer == null || zoomContainer?.RenderTransform is not TransformGroup transformGroup)
+                return;
+
+            var scaleTransform = transformGroup.Children.OfType<ScaleTransform>().FirstOrDefault();
+            var translateTransform = transformGroup.Children.OfType<TranslateTransform>().FirstOrDefault();
+
+            if (scaleTransform == null || translateTransform == null)
+                return;
+
+            var delta = e.Delta.Y;
+            var currentZoom = scaleTransform.ScaleX;
+            var newZoom = currentZoom + (delta * ZoomStep);
+
+            // Clamp zoom level
+            newZoom = Math.Clamp(newZoom, MinZoom, MaxZoom);
+
+            if (Math.Abs(newZoom - currentZoom) > 0.001)
+            {
+                // Get mouse position relative to the ZoomContainer
+                var mousePos = e.GetPosition(zoomContainer);
+
+                // The current mouse position in transformed space is:
+                // transformedX = (contentX * currentZoom) + currentTranslateX
+                // Solve for contentX: contentX = (transformedX - currentTranslateX) / currentZoom
+                var currentTranslateX = translateTransform.X;
+                var currentTranslateY = translateTransform.Y;
+
+                var contentX = (mousePos.X - currentTranslateX) / currentZoom;
+                var contentY = (mousePos.Y - currentTranslateY) / currentZoom;
+
+                // Apply new zoom
+                scaleTransform.ScaleX = newZoom;
+                scaleTransform.ScaleY = newZoom;
+
+                // Calculate new translation to keep the content point under the mouse
+                // mousePos = (contentX * newZoom) + newTranslateX
+                // newTranslateX = mousePos - (contentX * newZoom)
+                translateTransform.X = mousePos.X - (contentX * newZoom);
+                translateTransform.Y = mousePos.Y - (contentY * newZoom);
+
+                // Redraw annotations to match new zoom level
+                RedrawAnnotations();
+            }
+
+            e.Handled = true;
         }
 
         private void RedrawAnnotations()
