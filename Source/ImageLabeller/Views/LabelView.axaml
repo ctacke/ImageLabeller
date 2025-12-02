@@ -47,33 +47,55 @@
                                        BorderThickness="0,0,0,1"
                                        Padding="5"
                                        Margin="2">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <Button Grid.Column="0"
-                                               Command="{Binding $parent[ItemsControl].((vm:LabelViewModel)DataContext).SelectAnnotationCommand}"
-                                               CommandParameter="{Binding}"
-                                               HorizontalAlignment="Stretch"
-                                               HorizontalContentAlignment="Left"
-                                               Background="Transparent"
-                                               BorderThickness="0"
-                                               Padding="5">
-                                            <TextBlock>
-                                                <Run Text="Class "/>
-                                                <Run Text="{Binding ClassId}" FontWeight="Bold"/>
-                                            </TextBlock>
-                                        </Button>
+                                    <Grid RowDefinitions="Auto,Auto">
+                                        <!-- Row 0: Annotation display and delete button -->
+                                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                                            <TextBlock Grid.Column="0"
+                                                      VerticalAlignment="Center"
+                                                      Margin="8,5,5,2"
+                                                      FontWeight="SemiBold"
+                                                      FontSize="13"
+                                                      Foreground="#CCCCCC"
+                                                      Loaded="OnAnnotationTextBlockLoaded"/>
 
-                                        <Button Grid.Column="1"
-                                               Content="×"
-                                               Command="{Binding $parent[ItemsControl].((vm:LabelViewModel)DataContext).DeleteAnnotationCommand}"
-                                               CommandParameter="{Binding}"
-                                               Width="30"
-                                               Height="30"
-                                               Padding="0"
-                                               FontSize="18"
-                                               FontWeight="Bold"
-                                               Foreground="#FF6B6B"
-                                               Background="Transparent"
-                                               BorderThickness="0"/>
+                                            <Button Grid.Column="1"
+                                                   Content="×"
+                                                   Command="{Binding $parent[ItemsControl].((vm:LabelViewModel)DataContext).DeleteAnnotationCommand}"
+                                                   CommandParameter="{Binding}"
+                                                   Width="30"
+                                                   Height="30"
+                                                   Padding="0"
+                                                   FontSize="18"
+                                                   FontWeight="Bold"
+                                                   Foreground="#FF6B6B"
+                                                   Background="Transparent"
+                                                   BorderThickness="0"/>
+                                        </Grid>
+
+                                        <!-- Row 1: ComboBox to change class -->
+                                        <ComboBox Grid.Row="1"
+                                                 ItemsSource="{Binding $parent[ItemsControl].((vm:LabelViewModel)DataContext).ImageClasses}"
+                                                 HorizontalAlignment="Stretch"
+                                                 Margin="5,3,5,0"
+                                                 SelectionChanged="OnAnnotationClassChanged"
+                                                 Loaded="OnAnnotationClassComboBoxLoaded">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate DataType="models:ImageClass">
+                                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                                        <Border Width="12"
+                                                               Height="12"
+                                                               Background="{Binding Color}"
+                                                               BorderBrush="#FFFFFF"
+                                                               BorderThickness="1"
+                                                               CornerRadius="2"/>
+                                                        <TextBlock>
+                                                            <Run Text="["/><Run Text="{Binding Id}"/><Run Text="] "/>
+                                                            <Run Text="{Binding Name}"/>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
                                     </Grid>
                                 </Border>
                             </DataTemplate>

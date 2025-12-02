@@ -369,7 +369,7 @@ namespace ImageLabeller.ViewModels
             SaveCurrentAnnotations();
         }
 
-        private void SaveCurrentAnnotations()
+        public void SaveCurrentAnnotations()
         {
             if (_currentImageIndex < 0 || _currentImageIndex >= _sourceImageFiles.Count)
                 return;

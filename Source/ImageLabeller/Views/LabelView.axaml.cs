@@ -218,6 +218,65 @@ namespace ImageLabeller.Views
             }
         }
 
+        private void OnAnnotationTextBlockLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (sender is TextBlock textBlock &&
+                textBlock.DataContext is Models.YoloAnnotation annotation &&
+                DataContext is LabelViewModel viewModel)
+            {
+                // Set the text to "[{ClassId}] {ClassName}"
+                var imageClass = viewModel.GetClassById(annotation.ClassId);
+                var className = imageClass?.Name ?? "Unknown";
+                textBlock.Text = $"[{annotation.ClassId}] {className}";
+            }
+        }
+
+        private void OnAnnotationClassComboBoxLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (sender is ComboBox comboBox &&
+                comboBox.DataContext is Models.YoloAnnotation annotation &&
+                DataContext is LabelViewModel viewModel)
+            {
+                // Set the selected item based on the annotation's ClassId
+                var selectedClass = viewModel.ImageClasses.FirstOrDefault(c => c.Id == annotation.ClassId);
+                if (selectedClass != null)
+                {
+                    comboBox.SelectedItem = selectedClass;
+                }
+            }
+        }
+
+        private void OnAnnotationClassChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            if (sender is ComboBox comboBox &&
+                comboBox.DataContext is Models.YoloAnnotation annotation &&
+                comboBox.SelectedItem is Models.ImageClass selectedClass &&
+                DataContext is LabelViewModel viewModel)
+            {
+                // Update the annotation's ClassId
+                if (annotation.ClassId != selectedClass.Id)
+                {
+                    annotation.ClassId = selectedClass.Id;
+
+                    // Update the TextBlock to show the new class name
+                    if (comboBox.Parent is Grid grid && grid.Children.Count > 0 && grid.Children[0] is Grid headerGrid)
+                    {
+                        var textBlock = headerGrid.Children.OfType<TextBlock>().FirstOrDefault();
+                        if (textBlock != null)
+                        {
+                            textBlock.Text = $"[{annotation.ClassId}] {selectedClass.Name}";
+                        }
+                    }
+
+                    // Save the annotations when a class is changed
+                    viewModel.SaveCurrentAnnotations();
+
+                    // Redraw annotations to update the color
+                    RedrawAnnotations();
+                }
+            }
+        }
+
         private void OnCanvasSizeChanged(object? sender, SizeChangedEventArgs e)
         {
             RedrawAnnotations();
