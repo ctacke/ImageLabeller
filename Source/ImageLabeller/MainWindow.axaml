@@ -1,0 +1,84 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:ImageLabeller.ViewModels"
+        xmlns:views="using:ImageLabeller.Views"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="700"
+        x:Class="ImageLabeller.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="Image Labeller"
+        Width="1200" Height="700">
+
+    <Window.DataTemplates>
+        <DataTemplate DataType="vm:SortViewModel">
+            <views:SortView/>
+        </DataTemplate>
+        <DataTemplate DataType="vm:LabelViewModel">
+            <views:LabelView/>
+        </DataTemplate>
+    </Window.DataTemplates>
+
+    <Grid ColumnDefinitions="200,*">
+        <!-- Left Menu -->
+        <Border Grid.Column="0"
+                Background="#1E1E1E"
+                BorderBrush="#2D2D30"
+                BorderThickness="0,0,1,0">
+            <StackPanel Margin="0,20,0,0">
+                <TextBlock Text="OPERATIONS"
+                          FontSize="12"
+                          FontWeight="Bold"
+                          Foreground="#808080"
+                          Margin="20,0,0,10"/>
+
+                <Button Content="Sort"
+                        Command="{Binding NavigateToSort}"
+                        Classes="MenuButton"
+                        Classes.Selected="{Binding IsSortViewActive}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left"
+                        Padding="20,12"/>
+
+                <Button Content="Label"
+                        Command="{Binding NavigateToLabel}"
+                        Classes="MenuButton"
+                        Classes.Selected="{Binding IsLabelViewActive}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left"
+                        Padding="20,12"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Content Area -->
+        <ContentControl Grid.Column="1"
+                       Content="{Binding CurrentView}"
+                       Background="#252526"/>
+    </Grid>
+
+    <Window.Styles>
+        <Style Selector="Button.MenuButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="#CCCCCC"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.MenuButton:pointerover">
+            <Setter Property="Background" Value="#2A2D2E"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+        </Style>
+        <Style Selector="Button.MenuButton:pressed">
+            <Setter Property="Background" Value="#007ACC"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+        </Style>
+        <Style Selector="Button.MenuButton.Selected">
+            <Setter Property="Background" Value="#37373D"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="Button.MenuButton.Selected:pointerover">
+            <Setter Property="Background" Value="#3E3E42"/>
+        </Style>
+    </Window.Styles>
+</Window>

@@ -1,0 +1,122 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ImageLabeller.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
+             x:Class="ImageLabeller.Views.SortView"
+             x:DataType="vm:SortViewModel">
+    <Grid ColumnDefinitions="*,200" RowDefinitions="Auto,*,Auto" Margin="10">
+        <!-- Top: Folder Pickers (Row 0, Col 0) -->
+        <StackPanel Grid.Row="0" Grid.Column="0" Spacing="10" Margin="0,0,10,10">
+            <!-- Source Folder -->
+            <Grid ColumnDefinitions="150,*,Auto" Height="35">
+                <TextBlock Text="Source Folder:"
+                          VerticalAlignment="Center"
+                          Margin="5,0"/>
+                <TextBox Grid.Column="1"
+                        Text="{Binding SourceFolderPath}"
+                        IsReadOnly="True"
+                        VerticalContentAlignment="Center"
+                        Margin="5,0"/>
+                <Button Grid.Column="2"
+                       Content="Browse..."
+                       Command="{Binding BrowseSourceFolderCommand}"
+                       Width="100"
+                       Margin="5,0,0,0"/>
+            </Grid>
+
+            <!-- Destination Folder -->
+            <Grid ColumnDefinitions="150,*,Auto" Height="35">
+                <TextBlock Text="Destination Folder:"
+                          VerticalAlignment="Center"
+                          Margin="5,0"/>
+                <TextBox Grid.Column="1"
+                        Text="{Binding DestinationFolderPath}"
+                        IsReadOnly="True"
+                        VerticalContentAlignment="Center"
+                        Margin="5,0"/>
+                <Button Grid.Column="2"
+                       Content="Browse..."
+                       Command="{Binding BrowseDestinationFolderCommand}"
+                       Width="100"
+                       Margin="5,0,0,0"/>
+            </Grid>
+        </StackPanel>
+
+        <!-- Center: Image Viewer (Row 1, Col 0) -->
+        <Border Grid.Row="1"
+               Grid.Column="0"
+               BorderBrush="#3F3F46"
+               BorderThickness="1"
+               Background="#1E1E1E"
+               Margin="0,0,10,0">
+            <Grid>
+                <!-- Image display -->
+                <Image Source="{Binding CurrentImage}"
+                      Stretch="Uniform"
+                      IsVisible="{Binding CurrentImage, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+
+                <!-- "No image" message -->
+                <TextBlock Text="No image remaining"
+                          FontSize="24"
+                          Foreground="#808080"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          IsVisible="{Binding CurrentImage, Converter={x:Static ObjectConverters.IsNull}}"/>
+            </Grid>
+        </Border>
+
+        <!-- Right: Class Buttons (Row 0-1, Col 1) -->
+        <Border Grid.Row="0"
+               Grid.Column="1"
+               Grid.RowSpan="2"
+               BorderBrush="#3F3F46"
+               BorderThickness="1"
+               Background="#1E1E1E"
+               Margin="0,0,0,0">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding ImageClasses}"
+                             Margin="5">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Content="{Binding}"
+                                   Command="{Binding $parent[UserControl].((vm:SortViewModel)DataContext).ClassifyImageCommand}"
+                                   CommandParameter="{Binding}"
+                                   HorizontalAlignment="Stretch"
+                                   HorizontalContentAlignment="Center"
+                                   Margin="0,2"
+                                   Padding="10,12"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Bottom: Progress and Navigation (Row 2, Col 0-1) -->
+        <StackPanel Grid.Row="2"
+                   Grid.Column="0"
+                   Grid.ColumnSpan="2"
+                   Orientation="Horizontal"
+                   Spacing="15"
+                   Margin="0,10,0,0">
+            <TextBlock Text="{Binding ProgressText}"
+                      VerticalAlignment="Center"
+                      FontSize="14"
+                      FontWeight="Bold"
+                      Foreground="#CCCCCC"/>
+
+            <Button Content="Previous"
+                   Command="{Binding PreviousImageCommand}"
+                   Width="100"
+                   Padding="10,8"/>
+
+            <Button Content="Next"
+                   Command="{Binding NextImageCommand}"
+                   Width="100"
+                   Padding="10,8"/>
+        </StackPanel>
+    </Grid>
+</UserControl>
