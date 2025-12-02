@@ -6,10 +6,85 @@
              xmlns:models="using:ImageLabeller.Models"
              mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
              x:Class="ImageLabeller.Views.LabelView"
-             x:DataType="vm:LabelViewModel">
-    <Grid ColumnDefinitions="*,220" RowDefinitions="Auto,*,Auto" Margin="10">
-        <!-- Top: Source Folder Picker and Current Class (Row 0, Col 0) -->
-        <StackPanel Grid.Row="0" Grid.Column="0" Spacing="10" Margin="0,0,10,10">
+             x:DataType="vm:LabelViewModel"
+             Focusable="True"
+             KeyDown="OnKeyDown">
+
+    <UserControl.Styles>
+        <Style Selector="Button.ClassButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+        <Style Selector="Button.ClassButton:pointerover">
+            <Setter Property="Background" Value="#2A2D2E"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid ColumnDefinitions="200,*,220" RowDefinitions="Auto,*,Auto" Margin="10">
+        <!-- Left: Annotation List (Row 0-1, Col 0) -->
+        <Border Grid.Row="0"
+               Grid.Column="0"
+               Grid.RowSpan="2"
+               BorderBrush="#3F3F46"
+               BorderThickness="1"
+               Background="#1E1E1E"
+               Margin="0,0,10,0">
+            <Grid RowDefinitions="Auto,*">
+                <TextBlock Grid.Row="0"
+                          Text="Objects in Image"
+                          FontSize="14"
+                          FontWeight="Bold"
+                          Margin="10,10,10,5"/>
+
+                <ScrollViewer Grid.Row="1"
+                             VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding CurrentAnnotations}"
+                                 Margin="5">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="models:YoloAnnotation">
+                                <Border BorderBrush="#2D2D30"
+                                       BorderThickness="0,0,0,1"
+                                       Padding="5"
+                                       Margin="2">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <Button Grid.Column="0"
+                                               Command="{Binding $parent[ItemsControl].((vm:LabelViewModel)DataContext).SelectAnnotationCommand}"
+                                               CommandParameter="{Binding}"
+                                               HorizontalAlignment="Stretch"
+                                               HorizontalContentAlignment="Left"
+                                               Background="Transparent"
+                                               BorderThickness="0"
+                                               Padding="5">
+                                            <TextBlock>
+                                                <Run Text="Class "/>
+                                                <Run Text="{Binding ClassId}" FontWeight="Bold"/>
+                                            </TextBlock>
+                                        </Button>
+
+                                        <Button Grid.Column="1"
+                                               Content="×"
+                                               Command="{Binding $parent[ItemsControl].((vm:LabelViewModel)DataContext).DeleteAnnotationCommand}"
+                                               CommandParameter="{Binding}"
+                                               Width="30"
+                                               Height="30"
+                                               Padding="0"
+                                               FontSize="18"
+                                               FontWeight="Bold"
+                                               Foreground="#FF6B6B"
+                                               Background="Transparent"
+                                               BorderThickness="0"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <!-- Top: Source Folder Picker and Current Class (Row 0, Col 1) -->
+        <StackPanel Grid.Row="0" Grid.Column="1" Spacing="10" Margin="0,0,10,10">
             <!-- Source Folder -->
             <Grid ColumnDefinitions="150,*,Auto" Height="35">
                 <TextBlock Text="Source Folder:"
@@ -35,18 +110,27 @@
                       Margin="5,5,0,0"/>
         </StackPanel>
 
-        <!-- Center: Image Viewer (Row 1, Col 0) -->
+        <!-- Center: Image Viewer (Row 1, Col 1) -->
         <Border Grid.Row="1"
-               Grid.Column="0"
+               Grid.Column="1"
                BorderBrush="#3F3F46"
                BorderThickness="1"
                Background="#1E1E1E"
                Margin="0,0,10,0">
             <Grid>
                 <!-- Image display -->
-                <Image Source="{Binding CurrentImage}"
+                <Image x:Name="ImageDisplay"
+                      Source="{Binding CurrentImage}"
                       Stretch="Uniform"
                       IsVisible="{Binding CurrentImage, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+
+                <!-- Canvas overlay for drawing bounding boxes -->
+                <Canvas x:Name="AnnotationCanvas"
+                       Background="Transparent"
+                       PointerPressed="OnCanvasPointerPressed"
+                       PointerMoved="OnCanvasPointerMoved"
+                       PointerReleased="OnCanvasPointerReleased"
+                       IsVisible="{Binding CurrentImage, Converter={x:Static ObjectConverters.IsNotNull}}"/>
 
                 <!-- "No image" message -->
                 <TextBlock Text="No images loaded"
@@ -55,28 +139,35 @@
                           HorizontalAlignment="Center"
                           VerticalAlignment="Center"
                           IsVisible="{Binding CurrentImage, Converter={x:Static ObjectConverters.IsNull}}"/>
-
-                <!-- TODO: Add Canvas overlay for bounding boxes -->
             </Grid>
         </Border>
 
-        <!-- Right: Class Buttons (Row 0-1, Col 1) -->
+        <!-- Right: Class Buttons (Row 0-1, Col 2) -->
         <Border Grid.Row="0"
-               Grid.Column="1"
+               Grid.Column="2"
                Grid.RowSpan="2"
                BorderBrush="#3F3F46"
                BorderThickness="1"
                Background="#1E1E1E">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <ItemsControl ItemsSource="{Binding ImageClasses}"
+                <ItemsControl x:Name="ClassButtonsItemsControl"
+                             ItemsSource="{Binding ImageClasses}"
                              Margin="5">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="models:ImageClass">
-                            <Button Command="{Binding $parent[UserControl].((vm:LabelViewModel)DataContext).SelectClassCommand}"
+                            <Button x:Name="ClassButton"
+                                   Command="{Binding $parent[UserControl].((vm:LabelViewModel)DataContext).SelectClassCommand}"
                                    CommandParameter="{Binding}"
+                                   Classes="ClassButton"
                                    HorizontalAlignment="Stretch"
                                    Margin="0,2"
                                    Padding="8">
+                                <Button.Styles>
+                                    <Style Selector="Button.ClassButton[Tag=Selected]">
+                                        <Setter Property="Background" Value="#37373D"/>
+                                        <Setter Property="BorderBrush" Value="{Binding Color}"/>
+                                    </Style>
+                                </Button.Styles>
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <!-- Color indicator -->
                                     <Border Width="16"
@@ -100,10 +191,10 @@
             </ScrollViewer>
         </Border>
 
-        <!-- Bottom: Navigation (Row 2, Col 0-1) -->
+        <!-- Bottom: Navigation (Row 2, Col 0-2) -->
         <Grid Grid.Row="2"
              Grid.Column="0"
-             Grid.ColumnSpan="2"
+             Grid.ColumnSpan="3"
              ColumnDefinitions="Auto,*,Auto"
              Margin="0,10,0,0">
 

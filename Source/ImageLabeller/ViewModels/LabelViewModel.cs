@@ -2,6 +2,7 @@ using Avalonia.Media.Imaging;
 using ImageLabeller.Models;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Windows.Input;
@@ -27,7 +28,8 @@ namespace ImageLabeller.ViewModels
         private List<string> _sourceImageFiles = new();
         private string _imageCountText = "0 of 0";
         private ImageClass _selectedClass;
-        private List<YoloAnnotation> _currentAnnotations = new();
+        private ObservableCollection<YoloAnnotation> _currentAnnotations = new();
+        private YoloAnnotation? _selectedAnnotation;
         private MainWindowViewModel? _mainViewModel;
 
         public string SourceFolderPath
@@ -86,10 +88,16 @@ namespace ImageLabeller.ViewModels
             }
         }
 
-        public List<YoloAnnotation> CurrentAnnotations
+        public ObservableCollection<YoloAnnotation> CurrentAnnotations
         {
             get => _currentAnnotations;
             private set => SetProperty(ref _currentAnnotations, value);
+        }
+
+        public YoloAnnotation? SelectedAnnotation
+        {
+            get => _selectedAnnotation;
+            set => SetProperty(ref _selectedAnnotation, value);
         }
 
         public bool HasPreviousImage => _currentImageIndex > 0;
@@ -99,6 +107,8 @@ namespace ImageLabeller.ViewModels
         public ICommand SelectClassCommand { get; }
         public ICommand NextImageCommand { get; }
         public ICommand PreviousImageCommand { get; }
+        public ICommand SelectAnnotationCommand { get; }
+        public ICommand DeleteAnnotationCommand { get; }
 
         public LabelViewModel(MainWindowViewModel? mainViewModel = null)
         {
@@ -108,6 +118,8 @@ namespace ImageLabeller.ViewModels
             SelectClassCommand = new RelayCommand<ImageClass>(SelectClass!);
             NextImageCommand = new RelayCommand(NavigateNext, () => HasNextImage);
             PreviousImageCommand = new RelayCommand(NavigatePrevious, () => HasPreviousImage);
+            SelectAnnotationCommand = new RelayCommand<YoloAnnotation>(SelectAnnotation!);
+            DeleteAnnotationCommand = new RelayCommand<YoloAnnotation>(DeleteAnnotation!);
 
             // Initialize selected class
             var classes = ImageClasses;
@@ -152,7 +164,7 @@ namespace ImageLabeller.ViewModels
             _currentImageIndex = -1;
             CurrentImage?.Dispose();
             CurrentImage = null;
-            CurrentAnnotations = new List<YoloAnnotation>();
+            CurrentAnnotations = new ObservableCollection<YoloAnnotation>();
 
             if (string.IsNullOrEmpty(SourceFolderPath) || !Directory.Exists(SourceFolderPath))
             {
@@ -180,7 +192,7 @@ namespace ImageLabeller.ViewModels
                 CurrentImage?.Dispose();
                 CurrentImage = null;
                 _currentImageIndex = -1;
-                CurrentAnnotations = new List<YoloAnnotation>();
+                CurrentAnnotations = new ObservableCollection<YoloAnnotation>();
                 UpdateNavigationState();
                 return;
             }
@@ -198,7 +210,7 @@ namespace ImageLabeller.ViewModels
             catch
             {
                 CurrentImage = null;
-                CurrentAnnotations = new List<YoloAnnotation>();
+                CurrentAnnotations = new ObservableCollection<YoloAnnotation>();
             }
 
             UpdateImageCount();
@@ -214,15 +226,16 @@ namespace ImageLabeller.ViewModels
                 try
                 {
                     var lines = File.ReadAllLines(annotationPath);
-                    CurrentAnnotations = lines
+                    var annotations = lines
                         .Select(YoloAnnotation.Parse)
                         .Where(a => a != null)
                         .Cast<YoloAnnotation>()
                         .ToList();
+                    CurrentAnnotations = new ObservableCollection<YoloAnnotation>(annotations);
                 }
                 catch
                 {
-                    CurrentAnnotations = new List<YoloAnnotation>();
+                    CurrentAnnotations = new ObservableCollection<YoloAnnotation>();
                 }
             }
             else
@@ -231,11 +244,11 @@ namespace ImageLabeller.ViewModels
                 try
                 {
                     File.WriteAllText(annotationPath, string.Empty);
-                    CurrentAnnotations = new List<YoloAnnotation>();
+                    CurrentAnnotations = new ObservableCollection<YoloAnnotation>();
                 }
                 catch
                 {
-                    CurrentAnnotations = new List<YoloAnnotation>();
+                    CurrentAnnotations = new ObservableCollection<YoloAnnotation>();
                 }
             }
         }
@@ -307,6 +320,62 @@ namespace ImageLabeller.ViewModels
             if (classes.Length > 0 && !classes.Any(c => c.Id == SelectedClass.Id))
             {
                 SelectedClass = classes[0];
+            }
+        }
+
+        public void AddAnnotation(YoloAnnotation annotation)
+        {
+            CurrentAnnotations.Add(annotation);
+            SaveCurrentAnnotations();
+        }
+
+        private void SelectAnnotation(YoloAnnotation annotation)
+        {
+            SelectedAnnotation = annotation;
+        }
+
+        public void DeleteAnnotation(YoloAnnotation annotation)
+        {
+            CurrentAnnotations.Remove(annotation);
+            if (SelectedAnnotation == annotation)
+            {
+                SelectedAnnotation = null;
+            }
+            SaveCurrentAnnotations();
+        }
+
+        private void SaveCurrentAnnotations()
+        {
+            if (_currentImageIndex < 0 || _currentImageIndex >= _sourceImageFiles.Count)
+                return;
+
+            try
+            {
+                var imagePath = _sourceImageFiles[_currentImageIndex];
+                var annotationPath = Path.ChangeExtension(imagePath, ".txt");
+                var lines = CurrentAnnotations.Select(a => a.ToString());
+                File.WriteAllLines(annotationPath, lines);
+            }
+            catch
+            {
+                // Silently fail - in production, you'd want to show an error to the user
+            }
+        }
+
+        public void OnViewActivated()
+        {
+            // Auto-select class if folder name matches a class name
+            if (!string.IsNullOrEmpty(SourceFolderPath))
+            {
+                var folderName = Path.GetFileName(SourceFolderPath);
+                var matchingClass = ImageClasses.FirstOrDefault(c =>
+                    c.Name.Equals(folderName, StringComparison.OrdinalIgnoreCase));
+
+                if (matchingClass != null)
+                {
+                    SelectedClass = matchingClass;
+                    OnPropertyChanged(nameof(CurrentClassLabel));
+                }
             }
         }
     }
