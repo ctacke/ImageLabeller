@@ -37,7 +37,19 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore Source/ImageLabeller/ImageLabeller.csproj
 
-      - name: Build and Publish
+      - name: Build and Publish (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          dotnet publish Source/ImageLabeller/ImageLabeller.csproj `
+            -c Release `
+            -r ${{ matrix.rid }} `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -o publish/${{ matrix.artifact_name }}
+
+      - name: Build and Publish (Linux/macOS)
+        if: matrix.os != 'windows-latest'
         run: |
           dotnet publish Source/ImageLabeller/ImageLabeller.csproj \
             -c Release \
