@@ -18,5 +18,7 @@ namespace ImageLabeller.Models
         public double WindowHeight { get; set; } = 700;
         public double WindowX { get; set; } = double.NaN;
         public double WindowY { get; set; } = double.NaN;
+        public string ModelPath { get; set; } = string.Empty;
+        public string ModelTestImagePath { get; set; } = string.Empty;
     }
 }

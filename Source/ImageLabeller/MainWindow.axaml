@@ -20,6 +20,9 @@
         <DataTemplate DataType="vm:LabelViewModel">
             <views:LabelView/>
         </DataTemplate>
+        <DataTemplate DataType="vm:ModelViewModel">
+            <views:ModelView/>
+        </DataTemplate>
     </Window.DataTemplates>
 
     <Grid ColumnDefinitions="200,*">
@@ -55,6 +58,14 @@
                         Command="{Binding NavigateToLabel}"
                         Classes="MenuButton"
                         Classes.Selected="{Binding IsLabelViewActive}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left"
+                        Padding="20,12"/>
+
+                <Button Content="Model"
+                        Command="{Binding NavigateToModel}"
+                        Classes="MenuButton"
+                        Classes.Selected="{Binding IsModelViewActive}"
                         HorizontalAlignment="Stretch"
                         HorizontalContentAlignment="Left"
                         Padding="20,12"/>

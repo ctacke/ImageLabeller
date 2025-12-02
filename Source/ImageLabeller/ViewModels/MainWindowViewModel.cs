@@ -10,6 +10,7 @@ namespace ImageLabeller.ViewModels
         private readonly ClassesViewModel _classesViewModel;
         private readonly SortViewModel _sortViewModel;
         private readonly LabelViewModel _labelViewModel;
+        private readonly ModelViewModel _modelViewModel;
         private readonly SettingsService _settingsService;
 
         public UserSettings Settings { get; private set; }
@@ -24,6 +25,7 @@ namespace ImageLabeller.ViewModels
                     OnPropertyChanged(nameof(IsClassesViewActive));
                     OnPropertyChanged(nameof(IsSortViewActive));
                     OnPropertyChanged(nameof(IsLabelViewActive));
+                    OnPropertyChanged(nameof(IsModelViewActive));
                     SaveCurrentView();
                 }
             }
@@ -32,10 +34,12 @@ namespace ImageLabeller.ViewModels
         public bool IsClassesViewActive => CurrentView == _classesViewModel;
         public bool IsSortViewActive => CurrentView == _sortViewModel;
         public bool IsLabelViewActive => CurrentView == _labelViewModel;
+        public bool IsModelViewActive => CurrentView == _modelViewModel;
 
         public ICommand NavigateToClasses { get; }
         public ICommand NavigateToSort { get; }
         public ICommand NavigateToLabel { get; }
+        public ICommand NavigateToModel { get; }
 
         public MainWindowViewModel()
         {
@@ -46,6 +50,7 @@ namespace ImageLabeller.ViewModels
             _classesViewModel = new ClassesViewModel(this);
             _sortViewModel = new SortViewModel(this);
             _labelViewModel = new LabelViewModel(this);
+            _modelViewModel = new ModelViewModel(this);
 
             NavigateToClasses = new RelayCommand(() =>
             {
@@ -71,6 +76,14 @@ namespace ImageLabeller.ViewModels
                 }
             });
 
+            NavigateToModel = new RelayCommand(() =>
+            {
+                if (CurrentView != _modelViewModel)
+                {
+                    CurrentView = _modelViewModel;
+                }
+            });
+
             // Restore last active view or default to Sort
             RestoreLastView();
         }
@@ -81,6 +94,7 @@ namespace ImageLabeller.ViewModels
             {
                 "Classes" => _classesViewModel,
                 "Label" => _labelViewModel,
+                "Model" => _modelViewModel,
                 _ => _sortViewModel
             };
         }
@@ -98,6 +112,10 @@ namespace ImageLabeller.ViewModels
             else if (CurrentView == _labelViewModel)
             {
                 Settings.LastActiveView = "Label";
+            }
+            else if (CurrentView == _modelViewModel)
+            {
+                Settings.LastActiveView = "Model";
             }
 
             _settingsService.Save(Settings);

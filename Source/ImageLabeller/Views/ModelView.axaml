@@ -1,0 +1,102 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ImageLabeller.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
+             x:Class="ImageLabeller.Views.ModelView"
+             x:DataType="vm:ModelViewModel">
+    <Grid RowDefinitions="Auto,*,Auto" Margin="10">
+        <!-- Top: File Pickers -->
+        <StackPanel Grid.Row="0" Spacing="10" Margin="0,0,0,10">
+            <!-- Model File -->
+            <Grid ColumnDefinitions="150,*,Auto" Height="35">
+                <TextBlock Text="ONNX Model:"
+                          VerticalAlignment="Center"
+                          Margin="5,0"/>
+                <TextBox Grid.Column="1"
+                        Text="{Binding ModelPath}"
+                        IsReadOnly="True"
+                        VerticalContentAlignment="Center"
+                        Margin="5,0"/>
+                <Button Grid.Column="2"
+                       Content="Browse..."
+                       Command="{Binding BrowseModelCommand}"
+                       Width="100"
+                       Margin="5,0,0,0"/>
+            </Grid>
+
+            <!-- Test Image -->
+            <Grid ColumnDefinitions="150,*,Auto" Height="35">
+                <TextBlock Text="Test Image:"
+                          VerticalAlignment="Center"
+                          Margin="5,0"/>
+                <TextBox Grid.Column="1"
+                        Text="{Binding TestImagePath}"
+                        IsReadOnly="True"
+                        VerticalContentAlignment="Center"
+                        Margin="5,0"/>
+                <Button Grid.Column="2"
+                       Content="Browse..."
+                       Command="{Binding BrowseTestImageCommand}"
+                       Width="100"
+                       Margin="5,0,0,0"/>
+            </Grid>
+        </StackPanel>
+
+        <!-- Center: Image Viewer -->
+        <Border Grid.Row="1"
+               BorderBrush="#3F3F46"
+               BorderThickness="1"
+               Background="#1E1E1E">
+            <Grid>
+                <!-- Image display -->
+                <Image x:Name="InferenceImage"
+                      Source="{Binding CurrentImage}"
+                      Stretch="Uniform"
+                      IsVisible="{Binding CurrentImage, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+
+                <!-- Canvas overlay for inference results -->
+                <Canvas x:Name="InferenceCanvas"
+                       Background="Transparent"
+                       IsVisible="{Binding CurrentImage, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+
+                <!-- "No image" message -->
+                <TextBlock Text="No image loaded"
+                          FontSize="24"
+                          Foreground="#808080"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          IsVisible="{Binding CurrentImage, Converter={x:Static ObjectConverters.IsNull}}"/>
+            </Grid>
+        </Border>
+
+        <!-- Bottom: Navigation -->
+        <Grid Grid.Row="2"
+             ColumnDefinitions="Auto,*,Auto"
+             Margin="0,10,0,0">
+
+            <Button Grid.Column="0"
+                   Content="Previous"
+                   Command="{Binding PreviousImageCommand}"
+                   Width="100"
+                   Padding="10,8"
+                   Margin="0,0,10,0"/>
+
+            <TextBlock Grid.Column="1"
+                      Text="{Binding ImageCountText}"
+                      VerticalAlignment="Center"
+                      HorizontalAlignment="Center"
+                      FontSize="14"
+                      FontWeight="Bold"
+                      Foreground="#CCCCCC"/>
+
+            <Button Grid.Column="2"
+                   Content="Next"
+                   Command="{Binding NextImageCommand}"
+                   Width="100"
+                   Padding="10,8"
+                   Margin="10,0,0,0"/>
+        </Grid>
+    </Grid>
+</UserControl>
