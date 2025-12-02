@@ -40,7 +40,7 @@ namespace ImageLabeller.ViewModels
 
             // Create view models once and reuse them
             _sortViewModel = new SortViewModel(this);
-            _labelViewModel = new LabelViewModel();
+            _labelViewModel = new LabelViewModel(this);
 
             NavigateToSort = new RelayCommand(() =>
             {
