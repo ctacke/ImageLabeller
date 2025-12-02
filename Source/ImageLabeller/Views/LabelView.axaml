@@ -108,6 +108,23 @@
                       FontWeight="Bold"
                       Foreground="#FFFFFF"
                       Margin="5,5,0,0"/>
+
+            <!-- Auto-Labeling Section -->
+            <Grid ColumnDefinitions="Auto,*" Height="35" Margin="0,5,0,0">
+                <Button Grid.Column="0"
+                       Content="Apply Model"
+                       Command="{Binding ApplyModelCommand}"
+                       Width="120"
+                       Padding="10,8"
+                       Margin="5,0"/>
+
+                <TextBlock Grid.Column="1"
+                          Text="{Binding ModelStatus}"
+                          VerticalAlignment="Center"
+                          FontSize="14"
+                          Foreground="#CCCCCC"
+                          Margin="10,0,0,0"/>
+            </Grid>
         </StackPanel>
 
         <!-- Center: Image Viewer (Row 1, Col 1) -->

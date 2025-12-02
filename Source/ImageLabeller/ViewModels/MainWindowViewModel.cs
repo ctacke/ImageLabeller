@@ -14,6 +14,7 @@ namespace ImageLabeller.ViewModels
         private readonly SettingsService _settingsService;
 
         public UserSettings Settings { get; private set; }
+        public ModelViewModel ModelViewModel => _modelViewModel;
 
         public ViewModelBase? CurrentView
         {
@@ -49,8 +50,8 @@ namespace ImageLabeller.ViewModels
             // Create view models once and reuse them
             _classesViewModel = new ClassesViewModel(this);
             _sortViewModel = new SortViewModel(this);
-            _labelViewModel = new LabelViewModel(this);
             _modelViewModel = new ModelViewModel(this);
+            _labelViewModel = new LabelViewModel(this);
 
             NavigateToClasses = new RelayCommand(() =>
             {

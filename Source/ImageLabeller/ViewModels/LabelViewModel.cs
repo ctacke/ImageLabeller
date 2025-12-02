@@ -31,6 +31,7 @@ namespace ImageLabeller.ViewModels
         private ObservableCollection<YoloAnnotation> _currentAnnotations = new();
         private YoloAnnotation? _selectedAnnotation;
         private MainWindowViewModel? _mainViewModel;
+        private string _modelStatus = "Ready";
 
         public string SourceFolderPath
         {
@@ -100,8 +101,15 @@ namespace ImageLabeller.ViewModels
             set => SetProperty(ref _selectedAnnotation, value);
         }
 
+        public string ModelStatus
+        {
+            get => _modelStatus;
+            private set => SetProperty(ref _modelStatus, value);
+        }
+
         public bool HasPreviousImage => _currentImageIndex > 0;
         public bool HasNextImage => _currentImageIndex >= 0 && _currentImageIndex < _sourceImageFiles.Count - 1;
+        public bool CanApplyModel => _mainViewModel?.ModelViewModel?.HasModel == true && CurrentImage != null;
 
         public ICommand BrowseSourceFolderCommand { get; }
         public ICommand SelectClassCommand { get; }
@@ -109,6 +117,7 @@ namespace ImageLabeller.ViewModels
         public ICommand PreviousImageCommand { get; }
         public ICommand SelectAnnotationCommand { get; }
         public ICommand DeleteAnnotationCommand { get; }
+        public ICommand ApplyModelCommand { get; }
 
         public LabelViewModel(MainWindowViewModel? mainViewModel = null)
         {
@@ -120,6 +129,7 @@ namespace ImageLabeller.ViewModels
             PreviousImageCommand = new RelayCommand(NavigatePrevious, () => HasPreviousImage);
             SelectAnnotationCommand = new RelayCommand<YoloAnnotation>(SelectAnnotation!);
             DeleteAnnotationCommand = new RelayCommand<YoloAnnotation>(DeleteAnnotation!);
+            ApplyModelCommand = new RelayCommand(ApplyModel, () => CanApplyModel);
 
             // Initialize selected class
             var classes = ImageClasses;
@@ -136,6 +146,19 @@ namespace ImageLabeller.ViewModels
                 if (!string.IsNullOrEmpty(_sourceFolderPath))
                 {
                     LoadImagesFromSource();
+                }
+
+                // Subscribe to model changes (if ModelViewModel is initialized)
+                if (_mainViewModel.ModelViewModel != null)
+                {
+                    _mainViewModel.ModelViewModel.PropertyChanged += (s, e) =>
+                    {
+                        if (e.PropertyName == nameof(ModelViewModel.HasModel))
+                        {
+                            OnPropertyChanged(nameof(CanApplyModel));
+                            (ApplyModelCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                        }
+                    };
                 }
             }
         }
@@ -291,8 +314,10 @@ namespace ImageLabeller.ViewModels
         {
             OnPropertyChanged(nameof(HasPreviousImage));
             OnPropertyChanged(nameof(HasNextImage));
+            OnPropertyChanged(nameof(CanApplyModel));
             (NextImageCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (PreviousImageCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (ApplyModelCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
         private void SaveSettings()
@@ -376,6 +401,55 @@ namespace ImageLabeller.ViewModels
                     SelectedClass = matchingClass;
                     OnPropertyChanged(nameof(CurrentClassLabel));
                 }
+            }
+        }
+
+        private void ApplyModel()
+        {
+            if (_mainViewModel?.ModelViewModel == null || _currentImageIndex < 0 || _currentImageIndex >= _sourceImageFiles.Count)
+            {
+                ModelStatus = "Error: No model or image available";
+                return;
+            }
+
+            try
+            {
+                ModelStatus = "Running inference...";
+                var imagePath = _sourceImageFiles[_currentImageIndex];
+                var detections = _mainViewModel.ModelViewModel.RunInferenceOnImage(imagePath);
+
+                if (detections.Count == 0)
+                {
+                    ModelStatus = "No detections found";
+                    return;
+                }
+
+                // Find highest confidence detection
+                var bestDetection = detections.OrderByDescending(d => d.Confidence).First();
+                ModelStatus = $"{bestDetection.ClassName}: {bestDetection.Confidence:P0}";
+
+                // Add bounding box if confidence is above 50%
+                if (bestDetection.Confidence >= 0.5f)
+                {
+                    var annotation = new YoloAnnotation(
+                        bestDetection.ClassId,
+                        bestDetection.X,
+                        bestDetection.Y,
+                        bestDetection.Width,
+                        bestDetection.Height
+                    );
+
+                    AddAnnotation(annotation);
+                    ModelStatus = $"Added: {bestDetection.ClassName} ({bestDetection.Confidence:P0})";
+                }
+                else
+                {
+                    ModelStatus = $"Low confidence: {bestDetection.ClassName} ({bestDetection.Confidence:P0})";
+                }
+            }
+            catch (Exception ex)
+            {
+                ModelStatus = $"Error: {ex.Message}";
             }
         }
     }

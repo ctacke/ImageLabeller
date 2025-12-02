@@ -37,6 +37,7 @@ namespace ImageLabeller.ViewModels
             {
                 if (SetProperty(ref _modelPath, value))
                 {
+                    OnPropertyChanged(nameof(HasModel));
                     SaveSettings();
                     RunInference();
                 }
@@ -76,6 +77,7 @@ namespace ImageLabeller.ViewModels
 
         public bool HasPreviousImage => _currentImageIndex > 0;
         public bool HasNextImage => _currentImageIndex >= 0 && _currentImageIndex < _testImageFiles.Count - 1;
+        public bool HasModel => !string.IsNullOrEmpty(ModelPath) && File.Exists(ModelPath);
 
         public ICommand BrowseModelCommand { get; }
         public ICommand BrowseTestImageCommand { get; }
@@ -463,6 +465,79 @@ namespace ImageLabeller.ViewModels
                 _mainViewModel.Settings.ModelTestImagePath = _testImagePath;
                 _mainViewModel.SaveSettings();
             }
+        }
+
+        /// <summary>
+        /// Runs inference on the given image file and returns detections
+        /// </summary>
+        public List<Detection> RunInferenceOnImage(string imagePath)
+        {
+            var detections = new List<Detection>();
+
+            if (!HasModel || !File.Exists(imagePath))
+            {
+                return detections;
+            }
+
+            try
+            {
+                // Load model if not loaded
+                if (_session == null)
+                {
+                    _session = new InferenceSession(ModelPath);
+                }
+
+                // Load and preprocess image using SixLabors.ImageSharp
+                using var image = SixLabors.ImageSharp.Image.Load<Rgb24>(imagePath);
+                var originalWidth = image.Width;
+                var originalHeight = image.Height;
+
+                // Resize to model input size
+                image.Mutate(x => x.Resize(new ResizeOptions
+                {
+                    Size = new SixLabors.ImageSharp.Size(ModelInputSize, ModelInputSize),
+                    Mode = ResizeMode.Stretch
+                }));
+
+                // Convert to tensor (CHW format, normalized to 0-1)
+                var tensor = new DenseTensor<float>(new[] { 1, 3, ModelInputSize, ModelInputSize });
+                for (int y = 0; y < ModelInputSize; y++)
+                {
+                    for (int x = 0; x < ModelInputSize; x++)
+                    {
+                        var pixel = image[x, y];
+                        tensor[0, 0, y, x] = pixel.R / 255f;
+                        tensor[0, 1, y, x] = pixel.G / 255f;
+                        tensor[0, 2, y, x] = pixel.B / 255f;
+                    }
+                }
+
+                // Run inference
+                var inputs = new List<NamedOnnxValue>
+                {
+                    NamedOnnxValue.CreateFromTensor("images", tensor)
+                };
+
+                using var results = _session.Run(inputs);
+                var outputTensor = results.First();
+
+                // Get output dimensions
+                var shape = outputTensor.AsTensor<float>().Dimensions.ToArray();
+                var output = outputTensor.AsEnumerable<float>().ToArray();
+
+                // Process YOLO output
+                detections = ProcessYoloOutput(output, shape, originalWidth, originalHeight);
+
+                // Apply NMS
+                detections = ApplyNMS(detections, IouThreshold);
+            }
+            catch (Exception ex)
+            {
+                // Log error
+                Console.WriteLine($"Inference error: {ex.Message}");
+            }
+
+            return detections;
         }
     }
 }
