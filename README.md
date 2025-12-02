@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="transparent-icon-white.png" alt="ImageLabeller Icon" width="120"/>
+  <img src="Design/icon.png" alt="ImageLabeller Icon" width="120"/>
 
   # ImageLabeller
 

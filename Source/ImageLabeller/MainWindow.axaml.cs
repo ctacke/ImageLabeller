@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using ImageLabeller.ViewModels;
 using System;
+using System.Reflection;
 
 namespace ImageLabeller
 {
@@ -13,6 +14,10 @@ namespace ImageLabeller
             InitializeComponent();
             _viewModel = new MainWindowViewModel();
             DataContext = _viewModel;
+
+            // Set window title with version
+            var version = Assembly.GetExecutingAssembly().GetName().Version;
+            Title = $"Image Labeller v{version?.Major}.{version?.Minor}.{version?.Build}";
 
             // Subscribe to window events
             Opened += OnWindowOpened;
