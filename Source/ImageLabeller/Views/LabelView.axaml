@@ -163,10 +163,7 @@
                      PointerWheelChanged="OnImagePointerWheelChanged"
                      Background="Transparent">
                     <Grid.RenderTransform>
-                        <TransformGroup>
-                            <ScaleTransform ScaleX="1" ScaleY="1"/>
-                            <TranslateTransform X="0" Y="0"/>
-                        </TransformGroup>
+                        <ScaleTransform ScaleX="1" ScaleY="1"/>
                     </Grid.RenderTransform>
 
                     <!-- Image display -->

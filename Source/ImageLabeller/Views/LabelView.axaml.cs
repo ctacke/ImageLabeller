@@ -178,22 +178,16 @@ namespace ImageLabeller.Views
         private void ResetZoom()
         {
             var zoomContainer = this.FindControl<Grid>("ZoomContainer");
-            if (zoomContainer?.RenderTransform is TransformGroup transformGroup)
+            if (zoomContainer != null)
             {
-                var scaleTransform = transformGroup.Children.OfType<ScaleTransform>().FirstOrDefault();
-                var translateTransform = transformGroup.Children.OfType<TranslateTransform>().FirstOrDefault();
-
-                if (scaleTransform != null)
+                if (zoomContainer.RenderTransform is ScaleTransform scaleTransform)
                 {
                     scaleTransform.ScaleX = 1.0;
                     scaleTransform.ScaleY = 1.0;
                 }
 
-                if (translateTransform != null)
-                {
-                    translateTransform.X = 0;
-                    translateTransform.Y = 0;
-                }
+                // Reset transform origin to default (center)
+                zoomContainer.RenderTransformOrigin = new Avalonia.RelativePoint(0.5, 0.5, Avalonia.RelativeUnit.Relative);
             }
         }
 
@@ -288,52 +282,45 @@ namespace ImageLabeller.Views
             if (!e.KeyModifiers.HasFlag(KeyModifiers.Control))
                 return;
 
-            var scrollViewer = this.FindControl<ScrollViewer>("ImageScrollViewer");
             var zoomContainer = this.FindControl<Grid>("ZoomContainer");
-
-            if (scrollViewer == null || zoomContainer?.RenderTransform is not TransformGroup transformGroup)
+            if (zoomContainer == null)
                 return;
 
-            var scaleTransform = transformGroup.Children.OfType<ScaleTransform>().FirstOrDefault();
-            var translateTransform = transformGroup.Children.OfType<TranslateTransform>().FirstOrDefault();
-
-            if (scaleTransform == null || translateTransform == null)
+            var scaleTransform = zoomContainer.RenderTransform as ScaleTransform;
+            if (scaleTransform == null)
                 return;
 
             var delta = e.Delta.Y;
-            var currentZoom = scaleTransform.ScaleX;
-            var newZoom = currentZoom + (delta * ZoomStep);
+            var currentScale = scaleTransform.ScaleX;
+            var newScale = currentScale + (delta * ZoomStep);
 
             // Clamp zoom level
-            newZoom = Math.Clamp(newZoom, MinZoom, MaxZoom);
+            newScale = Math.Clamp(newScale, MinZoom, MaxZoom);
 
-            if (Math.Abs(newZoom - currentZoom) > 0.001)
+            if (Math.Abs(newScale - currentScale) < 0.001)
+                return;
+
+            // Get mouse position relative to the ZoomContainer
+            var mousePosition = e.GetPosition(zoomContainer);
+
+            // Calculate the transform origin as a ratio of the container size
+            // This tells the ScaleTransform where to zoom from
+            var bounds = zoomContainer.Bounds;
+            if (bounds.Width > 0 && bounds.Height > 0)
             {
-                // Get mouse position relative to the ZoomContainer
-                var mousePos = e.GetPosition(zoomContainer);
+                var originX = mousePosition.X / bounds.Width;
+                var originY = mousePosition.Y / bounds.Height;
 
-                // The current mouse position in transformed space is:
-                // transformedX = (contentX * currentZoom) + currentTranslateX
-                // Solve for contentX: contentX = (transformedX - currentTranslateX) / currentZoom
-                var currentTranslateX = translateTransform.X;
-                var currentTranslateY = translateTransform.Y;
-
-                var contentX = (mousePos.X - currentTranslateX) / currentZoom;
-                var contentY = (mousePos.Y - currentTranslateY) / currentZoom;
-
-                // Apply new zoom
-                scaleTransform.ScaleX = newZoom;
-                scaleTransform.ScaleY = newZoom;
-
-                // Calculate new translation to keep the content point under the mouse
-                // mousePos = (contentX * newZoom) + newTranslateX
-                // newTranslateX = mousePos - (contentX * newZoom)
-                translateTransform.X = mousePos.X - (contentX * newZoom);
-                translateTransform.Y = mousePos.Y - (contentY * newZoom);
-
-                // Redraw annotations to match new zoom level
-                RedrawAnnotations();
+                // Set the transform origin to the mouse position
+                zoomContainer.RenderTransformOrigin = new Avalonia.RelativePoint(originX, originY, Avalonia.RelativeUnit.Relative);
             }
+
+            // Apply the new scale
+            scaleTransform.ScaleX = newScale;
+            scaleTransform.ScaleY = newScale;
+
+            // Redraw annotations to match new zoom level
+            RedrawAnnotations();
 
             e.Handled = true;
         }
