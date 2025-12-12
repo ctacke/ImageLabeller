@@ -52,6 +52,20 @@ namespace ImageLabeller.ViewModels
                         LabelFileDestination = value;
                     }
 
+                    // Auto-select class if folder name matches a class name
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        var folderName = Path.GetFileName(value.TrimEnd(Path.DirectorySeparatorChar));
+                        var matchingClass = ImageClasses.FirstOrDefault(c =>
+                            c.Name.Equals(folderName, StringComparison.OrdinalIgnoreCase));
+
+                        if (matchingClass != null)
+                        {
+                            SelectedClass = matchingClass;
+                            OnPropertyChanged(nameof(CurrentClassLabel));
+                        }
+                    }
+
                     LoadImagesFromSource();
                     SaveSettings();
                 }

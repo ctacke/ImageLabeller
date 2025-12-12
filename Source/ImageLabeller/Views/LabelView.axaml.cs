@@ -380,32 +380,116 @@ namespace ImageLabeller.Views
 
         private string? BrowseForSourceFolder()
         {
-            return BrowseForFolder("Select Source Folder");
+            var viewModel = DataContext as LabelViewModel;
+            var suggestedPath = viewModel?.SourceFolderPath;
+            return BrowseForFolder("Select Source Folder", suggestedPath);
         }
 
         private string? BrowseForLabeledImageDestination()
         {
-            return BrowseForFolder("Select Labeled Images Destination");
+            var viewModel = DataContext as LabelViewModel;
+            var suggestedPath = viewModel?.LabeledImageDestination;
+            return BrowseForFolder("Select Labeled Images Destination", suggestedPath);
         }
 
         private string? BrowseForLabelFileDestination()
         {
-            return BrowseForFolder("Select Label Files Destination");
+            var viewModel = DataContext as LabelViewModel;
+            var suggestedPath = viewModel?.LabelFileDestination;
+            return BrowseForFolder("Select Label Files Destination", suggestedPath);
         }
 
-        private string? BrowseForFolder(string title)
+        private string? BrowseForFolder(string title, string? suggestedStartLocation = null)
         {
             var topLevel = TopLevel.GetTopLevel(this);
             if (topLevel == null)
                 return null;
 
-            var result = topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            var options = new FolderPickerOpenOptions
             {
                 Title = title,
                 AllowMultiple = false
-            }).GetAwaiter().GetResult();
+            };
+
+            // Set suggested start location if valid path exists
+            if (!string.IsNullOrEmpty(suggestedStartLocation))
+            {
+                try
+                {
+                    var folder = topLevel.StorageProvider.TryGetFolderFromPathAsync(suggestedStartLocation).GetAwaiter().GetResult();
+                    if (folder != null)
+                    {
+                        if (System.IO.Directory.Exists(folder.Path.LocalPath))
+                        {
+
+                            options.SuggestedStartLocation = folder;
+                        }
+                        else
+                        {
+                            // Notify user that the manually entered folder doesn't exist
+                            ShowFolderNotFoundMessage((Window)topLevel, suggestedStartLocation);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // If we can't get the folder, show error and use default location
+                    System.Diagnostics.Debug.WriteLine($"Error setting suggested folder: {ex.Message}");
+                }
+            }
+
+            var result = topLevel.StorageProvider.OpenFolderPickerAsync(options).GetAwaiter().GetResult();
 
             return result.FirstOrDefault()?.Path.LocalPath;
+        }
+
+        private void ShowFolderNotFoundMessage(Window owner, string folderPath)
+        {
+            var messageBox = new Window
+            {
+                Title = "Folder Not Found",
+                Width = 450,
+                Height = 180,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                CanResize = false,
+                Background = new SolidColorBrush(Color.FromRgb(30, 30, 30))
+            };
+
+            var okButton = new Button
+            {
+                Content = "OK",
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                Width = 100,
+                Padding = new Thickness(10, 8),
+                Margin = new Thickness(0, 10, 0, 0)
+            };
+
+            okButton.Click += (s, e) => messageBox.Close();
+
+            messageBox.Content = new StackPanel
+            {
+                Margin = new Thickness(20),
+                Spacing = 15,
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = "The specified folder does not exist:",
+                        FontWeight = Avalonia.Media.FontWeight.Bold,
+                        FontSize = 14
+                    },
+                    new TextBlock
+                    {
+                        Text = folderPath,
+                        TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                        Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204)),
+                        Margin = new Thickness(0, 0, 0, 10)
+                    },
+                    okButton
+                }
+            };
+
+            messageBox.ShowDialog(owner).GetAwaiter().GetResult();
         }
 
         private void OnCanvasPointerPressed(object? sender, PointerPressedEventArgs e)
