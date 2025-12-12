@@ -23,6 +23,9 @@
         <DataTemplate DataType="vm:ModelViewModel">
             <views:ModelView/>
         </DataTemplate>
+        <DataTemplate DataType="vm:ExtractViewModel">
+            <views:ExtractView/>
+        </DataTemplate>
     </Window.DataTemplates>
 
     <Grid ColumnDefinitions="200,*">
@@ -37,6 +40,14 @@
                           FontWeight="Bold"
                           Foreground="#808080"
                           Margin="20,0,0,10"/>
+
+                <Button Content="Extract"
+                        Command="{Binding NavigateToExtract}"
+                        Classes="MenuButton"
+                        Classes.Selected="{Binding IsExtractViewActive}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left"
+                        Padding="20,12"/>
 
                 <Button Content="Classes"
                         Command="{Binding NavigateToClasses}"

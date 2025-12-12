@@ -20,5 +20,10 @@ namespace ImageLabeller.Models
         public double WindowY { get; set; } = double.NaN;
         public string ModelPath { get; set; } = string.Empty;
         public string ModelTestImagePath { get; set; } = string.Empty;
+        public string ExtractLastVideoPath { get; set; } = string.Empty;
+        public string ExtractOutputFolder { get; set; } = string.Empty;
+        public string ExtractClassNamePrefix { get; set; } = string.Empty;
+        public int ExtractLastInFrame { get; set; } = 0;
+        public int ExtractLastOutFrame { get; set; } = 0;
     }
 }

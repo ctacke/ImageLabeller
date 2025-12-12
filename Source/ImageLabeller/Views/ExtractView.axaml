@@ -1,0 +1,223 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ImageLabeller.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
+             x:Class="ImageLabeller.Views.ExtractView"
+             x:DataType="vm:ExtractViewModel"
+             Focusable="True">
+
+    <Grid RowDefinitions="Auto,*,Auto,Auto" Margin="20">
+
+        <!-- Row 0: File/Folder Selection -->
+        <StackPanel Grid.Row="0" Spacing="10">
+            <!-- Video File Selection -->
+            <Grid ColumnDefinitions="150,*,Auto">
+                <TextBlock Grid.Column="0"
+                          Text="Video File:"
+                          VerticalAlignment="Center"
+                          Foreground="#CCCCCC"/>
+                <TextBox Grid.Column="1"
+                        Text="{Binding VideoFilePath}"
+                        IsReadOnly="True"
+                        Margin="10,0"
+                        Background="#1E1E1E"
+                        Foreground="#CCCCCC"
+                        BorderBrush="#3F3F46"/>
+                <Button Grid.Column="2"
+                       Content="Browse..."
+                       Command="{Binding BrowseVideoCommand}"
+                       Width="100"
+                       Background="#007ACC"
+                       Foreground="White"/>
+            </Grid>
+
+            <!-- Output Folder Selection -->
+            <Grid ColumnDefinitions="150,*,Auto">
+                <TextBlock Grid.Column="0"
+                          Text="Output Folder:"
+                          VerticalAlignment="Center"
+                          Foreground="#CCCCCC"/>
+                <TextBox Grid.Column="1"
+                        Text="{Binding OutputFolderPath}"
+                        IsReadOnly="True"
+                        Margin="10,0"
+                        Background="#1E1E1E"
+                        Foreground="#CCCCCC"
+                        BorderBrush="#3F3F46"/>
+                <Button Grid.Column="2"
+                       Content="Browse..."
+                       Command="{Binding BrowseOutputFolderCommand}"
+                       Width="100"
+                       Background="#007ACC"
+                       Foreground="White"/>
+            </Grid>
+
+            <!-- Class Name Input -->
+            <Grid ColumnDefinitions="150,*">
+                <TextBlock Grid.Column="0"
+                          Text="Class Name:"
+                          VerticalAlignment="Center"
+                          Foreground="#CCCCCC"
+                          ToolTip.Tip="Optional: Prefix for extracted frame filenames (e.g., 'mph55' creates mph55_00001.jpg)"/>
+                <TextBox Grid.Column="1"
+                        Text="{Binding ClassNamePrefix}"
+                        Margin="10,0"
+                        Background="#1E1E1E"
+                        Foreground="#CCCCCC"
+                        BorderBrush="#3F3F46"
+                        Watermark="Optional - e.g., mph55"
+                        ToolTip.Tip="Leave empty for default naming (frame_00001.jpg) or enter a prefix (e.g., 'mph55' for mph55_00001.jpg)"/>
+            </Grid>
+        </StackPanel>
+
+        <!-- Row 1: Video Player -->
+        <Border Grid.Row="1"
+                BorderBrush="#3F3F46"
+                BorderThickness="1"
+                Background="#1E1E1E"
+                Margin="0,15"
+                CornerRadius="4">
+            <Grid>
+                <!-- Video display -->
+                <Image Source="{Binding CurrentFrame}"
+                      Stretch="Uniform"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Center"/>
+
+                <!-- Placeholder text when no video loaded -->
+                <TextBlock Text="No video loaded. Click Browse to select an MP4 file."
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          Foreground="#808080"
+                          FontSize="16"
+                          IsVisible="{Binding !IsVideoLoaded}"/>
+            </Grid>
+        </Border>
+
+        <!-- Row 2: Timeline Scrubber -->
+        <Grid Grid.Row="2" ColumnDefinitions="80,*,80" Margin="0,10">
+            <TextBlock Grid.Column="0"
+                      Text="{Binding CurrentTimeDisplay}"
+                      VerticalAlignment="Center"
+                      Foreground="#CCCCCC"
+                      FontFamily="Consolas"/>
+
+            <!-- Timeline Slider -->
+            <Slider Grid.Column="1"
+                    Minimum="0"
+                    Maximum="{Binding TotalFrames}"
+                    Value="{Binding CurrentFrameIndex, Mode=TwoWay}"
+                    IsSnapToTickEnabled="True"
+                    TickFrequency="1"
+                    Margin="10,0"
+                    IsEnabled="{Binding IsVideoLoaded}"/>
+
+            <TextBlock Grid.Column="2"
+                      Text="{Binding DurationDisplay}"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Center"
+                      Foreground="#CCCCCC"
+                      FontFamily="Consolas"/>
+        </Grid>
+
+        <!-- Row 3: Controls -->
+        <Grid Grid.Row="3" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto">
+            <!-- Playback Controls (Row 0, Col 0) -->
+            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
+                <Button Content="◄ Back"
+                       Command="{Binding StepBackwardCommand}"
+                       Width="100"
+                       Background="#3F3F46"
+                       Foreground="#CCCCCC"
+                       ToolTip.Tip="Step backward 1 frame (Left Arrow Key)"/>
+                <Button Content="{Binding PlayPauseButtonText}"
+                       Command="{Binding PlayPauseCommand}"
+                       Width="80"
+                       Background="#007ACC"
+                       Foreground="White"
+                       ToolTip.Tip="Play/Pause video (Space Key)"/>
+                <Button Content="Forward ►"
+                       Command="{Binding StepForwardCommand}"
+                       Width="100"
+                       Background="#3F3F46"
+                       Foreground="#CCCCCC"
+                       ToolTip.Tip="Step forward 1 frame (Right Arrow Key)"/>
+                <Button Content="Stop"
+                       Command="{Binding StopCommand}"
+                       Width="80"
+                       Background="#D13438"
+                       Foreground="White"
+                       ToolTip.Tip="Stop playback and return to start"/>
+            </StackPanel>
+
+            <!-- In/Out Display (Row 0, Col 1) -->
+            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="15" HorizontalAlignment="Right" Margin="0,10,0,0">
+                <StackPanel>
+                    <TextBlock Text="In Point:" FontSize="10" Foreground="#808080" />
+                    <TextBlock Text="{Binding InPointDisplay}" FontSize="14" FontWeight="Bold" Foreground="#4EC9B0" FontFamily="Consolas" />
+                </StackPanel>
+                <Button Content="Set In"
+                       Command="{Binding SetInPointCommand}"
+                       Width="70"
+                       Height="32"
+                       Background="#4EC9B0"
+                       Foreground="Black"
+                       FontWeight="Bold"
+                       ToolTip.Tip="Set In point at current frame (I Key)"/>
+                <StackPanel>
+                    <TextBlock Text="Out Point:" FontSize="10" Foreground="#808080" />
+                    <TextBlock Text="{Binding OutPointDisplay}" FontSize="14" FontWeight="Bold" Foreground="#CE9178" FontFamily="Consolas" />
+                </StackPanel>
+                <Button Content="Set Out"
+                       Command="{Binding SetOutPointCommand}"
+                       Width="70"
+                       Height="32"
+                       Background="#CE9178"
+                       Foreground="Black"
+                       FontWeight="Bold"
+                       ToolTip.Tip="Set Out point at current frame (O Key)"/>
+            </StackPanel>
+
+            <!-- Extract Button (Row 1, Col 0-1) -->
+            <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="15" Margin="0,15,0,0">
+                <Button Content="Extract Frames"
+                       Command="{Binding ExtractCommand}"
+                       Width="150"
+                       Height="40"
+                       FontSize="16"
+                       FontWeight="Bold"
+                       Background="#16825D"
+                       Foreground="White"
+                       ToolTip.Tip="Extract all frames between In and Out points to JPG files"/>
+
+                <!-- Progress display -->
+                <StackPanel Spacing="5" VerticalAlignment="Center">
+                    <ProgressBar Value="{Binding ExtractionProgress}"
+                                Width="300"
+                                Height="20"
+                                Foreground="#16825D"
+                                IsVisible="{Binding IsExtracting}" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Frame Count Estimate (Row 2, Col 0-1) -->
+            <TextBlock Grid.Row="2" Grid.ColumnSpan="2"
+                      Text="{Binding FrameCountEstimate}"
+                      Margin="0,10,0,0"
+                      Foreground="#CCCCCC"
+                      FontWeight="SemiBold"
+                      FontSize="13"
+                      IsVisible="{Binding HasInOutPoints}"/>
+
+            <!-- Status Message (Row 3, Col 0-1) -->
+            <TextBlock Grid.Row="3" Grid.ColumnSpan="2"
+                      Text="{Binding StatusMessage}"
+                      Margin="0,10,0,0"
+                      Foreground="#CCCCCC"
+                      TextWrapping="Wrap"
+                      FontStyle="Italic"/>
+        </Grid>
+    </Grid>
+</UserControl>

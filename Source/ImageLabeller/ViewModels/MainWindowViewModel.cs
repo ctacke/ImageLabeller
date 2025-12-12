@@ -11,6 +11,7 @@ namespace ImageLabeller.ViewModels
         private readonly SortViewModel _sortViewModel;
         private readonly LabelViewModel _labelViewModel;
         private readonly ModelViewModel _modelViewModel;
+        private readonly ExtractViewModel _extractViewModel;
         private readonly SettingsService _settingsService;
 
         public UserSettings Settings { get; private set; }
@@ -27,6 +28,7 @@ namespace ImageLabeller.ViewModels
                     OnPropertyChanged(nameof(IsSortViewActive));
                     OnPropertyChanged(nameof(IsLabelViewActive));
                     OnPropertyChanged(nameof(IsModelViewActive));
+                    OnPropertyChanged(nameof(IsExtractViewActive));
                     SaveCurrentView();
                 }
             }
@@ -36,11 +38,13 @@ namespace ImageLabeller.ViewModels
         public bool IsSortViewActive => CurrentView == _sortViewModel;
         public bool IsLabelViewActive => CurrentView == _labelViewModel;
         public bool IsModelViewActive => CurrentView == _modelViewModel;
+        public bool IsExtractViewActive => CurrentView == _extractViewModel;
 
         public ICommand NavigateToClasses { get; }
         public ICommand NavigateToSort { get; }
         public ICommand NavigateToLabel { get; }
         public ICommand NavigateToModel { get; }
+        public ICommand NavigateToExtract { get; }
 
         public MainWindowViewModel()
         {
@@ -52,6 +56,7 @@ namespace ImageLabeller.ViewModels
             _sortViewModel = new SortViewModel(this);
             _modelViewModel = new ModelViewModel(this);
             _labelViewModel = new LabelViewModel(this);
+            _extractViewModel = new ExtractViewModel(this);
 
             NavigateToClasses = new RelayCommand(() =>
             {
@@ -85,6 +90,14 @@ namespace ImageLabeller.ViewModels
                 }
             });
 
+            NavigateToExtract = new RelayCommand(() =>
+            {
+                if (CurrentView != _extractViewModel)
+                {
+                    CurrentView = _extractViewModel;
+                }
+            });
+
             // Restore last active view or default to Sort
             RestoreLastView();
         }
@@ -96,6 +109,7 @@ namespace ImageLabeller.ViewModels
                 "Classes" => _classesViewModel,
                 "Label" => _labelViewModel,
                 "Model" => _modelViewModel,
+                "Extract" => _extractViewModel,
                 _ => _sortViewModel
             };
         }
@@ -117,6 +131,10 @@ namespace ImageLabeller.ViewModels
             else if (CurrentView == _modelViewModel)
             {
                 Settings.LastActiveView = "Model";
+            }
+            else if (CurrentView == _extractViewModel)
+            {
+                Settings.LastActiveView = "Extract";
             }
 
             _settingsService.Save(Settings);
