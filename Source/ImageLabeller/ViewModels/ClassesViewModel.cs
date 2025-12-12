@@ -38,7 +38,15 @@ namespace ImageLabeller.ViewModels
         public string NewClassName
         {
             get => _newClassName;
-            set => SetProperty(ref _newClassName, value);
+            set
+            {
+                if (SetProperty(ref _newClassName, value))
+                {
+                    // Notify commands to re-evaluate their CanExecute
+                    (AddClassCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                    (SaveEditCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                }
+            }
         }
 
         public bool IsEditing
