@@ -1,0 +1,139 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ImageLabeller.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="ImageLabeller.Views.LabelCheckView"
+             x:DataType="vm:LabelCheckViewModel">
+    <Grid RowDefinitions="Auto,*" Margin="20">
+        <!-- Top: Controls Section -->
+        <Border Grid.Row="0"
+                BorderBrush="#3F3F46"
+                BorderThickness="1"
+                Background="#1E1E1E"
+                Padding="15"
+                Margin="0,0,0,15">
+            <StackPanel Spacing="15">
+                <TextBlock Text="YOLO Label Checking"
+                          FontSize="18"
+                          FontWeight="Bold"
+                          Margin="0,0,0,10"/>
+
+                <!-- Source Image Folder -->
+                <Grid ColumnDefinitions="180,*,Auto">
+                    <TextBlock Text="Source Image Folder:"
+                              VerticalAlignment="Center"
+                              Margin="5,0"/>
+                    <TextBox Grid.Column="1"
+                            Text="{Binding SourceImageFolder}"
+                            IsReadOnly="True"
+                            VerticalContentAlignment="Center"
+                            Margin="5,0"/>
+                    <Button Grid.Column="2"
+                           Content="Browse..."
+                           Command="{Binding BrowseImageFolderCommand}"
+                           Width="100"
+                           Margin="5,0,0,0"/>
+                </Grid>
+
+                <!-- Source Label Folder -->
+                <Grid ColumnDefinitions="180,*,Auto">
+                    <TextBlock Text="Source Label Folder:"
+                              VerticalAlignment="Center"
+                              Margin="5,0"/>
+                    <TextBox Grid.Column="1"
+                            Text="{Binding SourceLabelFolder}"
+                            IsReadOnly="True"
+                            VerticalContentAlignment="Center"
+                            Margin="5,0"/>
+                    <Button Grid.Column="2"
+                           Content="Browse..."
+                           Command="{Binding BrowseLabelFolderCommand}"
+                           Width="100"
+                           Margin="5,0,0,0"/>
+                </Grid>
+
+                <!-- Class Selector -->
+                <Grid ColumnDefinitions="180,*">
+                    <TextBlock Text="Expected Class:"
+                              VerticalAlignment="Center"
+                              Margin="5,0"/>
+                    <ComboBox Grid.Column="1"
+                             ItemsSource="{Binding ClassNames}"
+                             SelectedItem="{Binding SelectedClassName}"
+                             Margin="5,0"
+                             HorizontalAlignment="Stretch"/>
+                </Grid>
+
+                <!-- Buttons and Summary -->
+                <Grid ColumnDefinitions="Auto,Auto,*">
+                    <Button Grid.Column="0"
+                           Content="Validate"
+                           Command="{Binding ValidateCommand}"
+                           Padding="20,8"
+                           Margin="5,5,0,0"/>
+
+                    <Button Grid.Column="1"
+                           Content="Re-class"
+                           Command="{Binding ReClassCommand}"
+                           Padding="20,8"
+                           Margin="10,5,0,0"
+                           IsEnabled="{Binding CanReClass}"/>
+
+                    <TextBlock Grid.Column="2"
+                              Text="{Binding ValidationSummary}"
+                              VerticalAlignment="Center"
+                              FontSize="14"
+                              FontWeight="SemiBold"
+                              Foreground="{Binding ValidationSummaryColor}"
+                              Margin="20,0,0,0"/>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!-- Bottom: Image List -->
+        <Border Grid.Row="1"
+                BorderBrush="#3F3F46"
+                BorderThickness="1"
+                Background="#1E1E1E">
+            <Grid RowDefinitions="Auto,*">
+                <TextBlock Grid.Row="0"
+                          Text="Images"
+                          FontSize="14"
+                          FontWeight="Bold"
+                          Margin="10,10,10,5"/>
+
+                <ScrollViewer Grid.Row="1"
+                             VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding ImageList}"
+                                 Margin="10">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:ImageFileItem">
+                                <Border BorderBrush="#2D2D30"
+                                       BorderThickness="0,0,0,1"
+                                       Padding="5"
+                                       Margin="0,2">
+                                    <Grid ColumnDefinitions="300,*">
+                                        <TextBlock Grid.Column="0"
+                                                  Text="{Binding FileName}"
+                                                  FontFamily="Consolas"
+                                                  FontSize="13"
+                                                  VerticalAlignment="Center"
+                                                  Foreground="{Binding FileNameColor}"/>
+                                        <TextBlock Grid.Column="1"
+                                                  Text="{Binding Status}"
+                                                  FontSize="12"
+                                                  VerticalAlignment="Center"
+                                                  Margin="10,0,0,0"
+                                                  Foreground="{Binding StatusColor}"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

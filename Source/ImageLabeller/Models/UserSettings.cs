@@ -31,5 +31,8 @@ namespace ImageLabeller.Models
         public int RenameNextFileIndex { get; set; } = 1;
         public string RenameSelectedClassName { get; set; } = string.Empty;
         public bool RenameAll { get; set; } = false;
+        public string LabelCheckSourceImageFolder { get; set; } = string.Empty;
+        public string LabelCheckSourceLabelFolder { get; set; } = string.Empty;
+        public string LabelCheckSelectedClassName { get; set; } = string.Empty;
     }
 }

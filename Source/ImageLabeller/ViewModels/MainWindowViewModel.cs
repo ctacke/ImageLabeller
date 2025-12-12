@@ -11,6 +11,7 @@ namespace ImageLabeller.ViewModels
         private readonly ClassesViewModel _classesViewModel;
         private readonly SortViewModel _sortViewModel;
         private readonly LabelViewModel _labelViewModel;
+        private readonly LabelCheckViewModel _labelCheckViewModel;
         private readonly ModelViewModel _modelViewModel;
         private readonly ExtractViewModel _extractViewModel;
         private readonly RenameViewModel _renameViewModel;
@@ -29,6 +30,7 @@ namespace ImageLabeller.ViewModels
                     OnPropertyChanged(nameof(IsClassesViewActive));
                     OnPropertyChanged(nameof(IsSortViewActive));
                     OnPropertyChanged(nameof(IsLabelViewActive));
+                    OnPropertyChanged(nameof(IsLabelCheckViewActive));
                     OnPropertyChanged(nameof(IsModelViewActive));
                     OnPropertyChanged(nameof(IsExtractViewActive));
                     OnPropertyChanged(nameof(IsRenameViewActive));
@@ -40,6 +42,7 @@ namespace ImageLabeller.ViewModels
         public bool IsClassesViewActive => CurrentView == _classesViewModel;
         public bool IsSortViewActive => CurrentView == _sortViewModel;
         public bool IsLabelViewActive => CurrentView == _labelViewModel;
+        public bool IsLabelCheckViewActive => CurrentView == _labelCheckViewModel;
         public bool IsModelViewActive => CurrentView == _modelViewModel;
         public bool IsExtractViewActive => CurrentView == _extractViewModel;
         public bool IsRenameViewActive => CurrentView == _renameViewModel;
@@ -47,6 +50,7 @@ namespace ImageLabeller.ViewModels
         public ICommand NavigateToClasses { get; }
         public ICommand NavigateToSort { get; }
         public ICommand NavigateToLabel { get; }
+        public ICommand NavigateToLabelCheck { get; }
         public ICommand NavigateToModel { get; }
         public ICommand NavigateToExtract { get; }
         public ICommand NavigateToRename { get; }
@@ -62,6 +66,7 @@ namespace ImageLabeller.ViewModels
             _sortViewModel = new SortViewModel(this);
             _modelViewModel = new ModelViewModel(this);
             _labelViewModel = new LabelViewModel(this);
+            _labelCheckViewModel = new LabelCheckViewModel(this);
             _extractViewModel = new ExtractViewModel(this);
             _renameViewModel = new RenameViewModel(this);
 
@@ -86,6 +91,14 @@ namespace ImageLabeller.ViewModels
                 if (CurrentView != _labelViewModel)
                 {
                     CurrentView = _labelViewModel;
+                }
+            });
+
+            NavigateToLabelCheck = new RelayCommand(() =>
+            {
+                if (CurrentView != _labelCheckViewModel)
+                {
+                    CurrentView = _labelCheckViewModel;
                 }
             });
 
@@ -125,6 +138,7 @@ namespace ImageLabeller.ViewModels
             {
                 "Classes" => _classesViewModel,
                 "Label" => _labelViewModel,
+                "LabelCheck" => _labelCheckViewModel,
                 "Model" => _modelViewModel,
                 "Extract" => _extractViewModel,
                 "Rename" => _renameViewModel,
@@ -145,6 +159,10 @@ namespace ImageLabeller.ViewModels
             else if (CurrentView == _labelViewModel)
             {
                 Settings.LastActiveView = "Label";
+            }
+            else if (CurrentView == _labelCheckViewModel)
+            {
+                Settings.LastActiveView = "LabelCheck";
             }
             else if (CurrentView == _modelViewModel)
             {
@@ -171,6 +189,7 @@ namespace ImageLabeller.ViewModels
         {
             _sortViewModel.RefreshClasses();
             _labelViewModel.RefreshClasses();
+            _labelCheckViewModel.RefreshClasses();
             _renameViewModel.RefreshClasses();
         }
 

@@ -29,6 +29,9 @@
         <DataTemplate DataType="vm:RenameViewModel">
             <views:RenameView/>
         </DataTemplate>
+        <DataTemplate DataType="vm:LabelCheckViewModel">
+            <views:LabelCheckView/>
+        </DataTemplate>
     </Window.DataTemplates>
 
     <DockPanel>
@@ -91,6 +94,14 @@
                         Command="{Binding NavigateToLabel}"
                         Classes="MenuButton"
                         Classes.Selected="{Binding IsLabelViewActive}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left"
+                        Padding="20,12"/>
+
+                <Button Content="Label Check"
+                        Command="{Binding NavigateToLabelCheck}"
+                        Classes="MenuButton"
+                        Classes.Selected="{Binding IsLabelCheckViewActive}"
                         HorizontalAlignment="Stretch"
                         HorizontalContentAlignment="Left"
                         Padding="20,12"/>
