@@ -13,6 +13,7 @@ namespace ImageLabeller.ViewModels
         private readonly LabelViewModel _labelViewModel;
         private readonly ModelViewModel _modelViewModel;
         private readonly ExtractViewModel _extractViewModel;
+        private readonly RenameViewModel _renameViewModel;
         private readonly SettingsService _settingsService;
 
         public UserSettings Settings { get; private set; }
@@ -30,6 +31,7 @@ namespace ImageLabeller.ViewModels
                     OnPropertyChanged(nameof(IsLabelViewActive));
                     OnPropertyChanged(nameof(IsModelViewActive));
                     OnPropertyChanged(nameof(IsExtractViewActive));
+                    OnPropertyChanged(nameof(IsRenameViewActive));
                     SaveCurrentView();
                 }
             }
@@ -40,12 +42,14 @@ namespace ImageLabeller.ViewModels
         public bool IsLabelViewActive => CurrentView == _labelViewModel;
         public bool IsModelViewActive => CurrentView == _modelViewModel;
         public bool IsExtractViewActive => CurrentView == _extractViewModel;
+        public bool IsRenameViewActive => CurrentView == _renameViewModel;
 
         public ICommand NavigateToClasses { get; }
         public ICommand NavigateToSort { get; }
         public ICommand NavigateToLabel { get; }
         public ICommand NavigateToModel { get; }
         public ICommand NavigateToExtract { get; }
+        public ICommand NavigateToRename { get; }
         public ICommand RevealConfigCommand { get; }
 
         public MainWindowViewModel()
@@ -59,6 +63,7 @@ namespace ImageLabeller.ViewModels
             _modelViewModel = new ModelViewModel(this);
             _labelViewModel = new LabelViewModel(this);
             _extractViewModel = new ExtractViewModel(this);
+            _renameViewModel = new RenameViewModel(this);
 
             NavigateToClasses = new RelayCommand(() =>
             {
@@ -100,6 +105,14 @@ namespace ImageLabeller.ViewModels
                 }
             });
 
+            NavigateToRename = new RelayCommand(() =>
+            {
+                if (CurrentView != _renameViewModel)
+                {
+                    CurrentView = _renameViewModel;
+                }
+            });
+
             RevealConfigCommand = new RelayCommand(RevealConfig);
 
             // Restore last active view or default to Sort
@@ -114,6 +127,7 @@ namespace ImageLabeller.ViewModels
                 "Label" => _labelViewModel,
                 "Model" => _modelViewModel,
                 "Extract" => _extractViewModel,
+                "Rename" => _renameViewModel,
                 _ => _sortViewModel
             };
         }
@@ -140,6 +154,10 @@ namespace ImageLabeller.ViewModels
             {
                 Settings.LastActiveView = "Extract";
             }
+            else if (CurrentView == _renameViewModel)
+            {
+                Settings.LastActiveView = "Rename";
+            }
 
             _settingsService.Save(Settings);
         }
@@ -153,6 +171,7 @@ namespace ImageLabeller.ViewModels
         {
             _sortViewModel.RefreshClasses();
             _labelViewModel.RefreshClasses();
+            _renameViewModel.RefreshClasses();
         }
 
         private void RevealConfig()

@@ -1,0 +1,115 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ImageLabeller.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="ImageLabeller.Views.RenameView"
+             x:DataType="vm:RenameViewModel">
+    <Grid RowDefinitions="Auto,*" Margin="20">
+        <!-- Top: Controls Section -->
+        <Border Grid.Row="0"
+                BorderBrush="#3F3F46"
+                BorderThickness="1"
+                Background="#1E1E1E"
+                Padding="15"
+                Margin="0,0,0,15">
+            <StackPanel Spacing="15">
+                <TextBlock Text="Rename Files"
+                          FontSize="18"
+                          FontWeight="Bold"
+                          Margin="0,0,0,10"/>
+
+                <!-- Source Folder -->
+                <Grid ColumnDefinitions="150,*,Auto">
+                    <TextBlock Text="Source Folder:"
+                              VerticalAlignment="Center"
+                              Margin="5,0"/>
+                    <TextBox Grid.Column="1"
+                            Text="{Binding SourceFolderPath}"
+                            IsReadOnly="True"
+                            VerticalContentAlignment="Center"
+                            Margin="5,0"/>
+                    <Button Grid.Column="2"
+                           Content="Browse..."
+                           Command="{Binding BrowseSourceFolderCommand}"
+                           Width="100"
+                           Margin="5,0,0,0"/>
+                </Grid>
+
+                <!-- Class Name Selector -->
+                <Grid ColumnDefinitions="150,*">
+                    <TextBlock Text="Class Name:"
+                              VerticalAlignment="Center"
+                              Margin="5,0"/>
+                    <ComboBox Grid.Column="1"
+                             ItemsSource="{Binding ClassNames}"
+                             SelectedItem="{Binding SelectedClassName}"
+                             Margin="5,0"
+                             HorizontalAlignment="Stretch"/>
+                </Grid>
+
+                <!-- Next File Index -->
+                <Grid ColumnDefinitions="150,200,*">
+                    <TextBlock Text="Next File Index:"
+                              VerticalAlignment="Center"
+                              Margin="5,0"/>
+                    <TextBox Grid.Column="1"
+                            Text="{Binding NextFileIndex}"
+                            Margin="5,0"
+                            VerticalContentAlignment="Center"/>
+                    <TextBlock Grid.Column="2"
+                              Text="(Files will be renamed as: {ClassName}_{Index:0000}.jpg)"
+                              VerticalAlignment="Center"
+                              Foreground="#808080"
+                              FontSize="12"
+                              Margin="10,0,0,0"/>
+                </Grid>
+
+                <!-- Rename Button and Checkbox -->
+                <StackPanel Orientation="Horizontal" Spacing="15" Margin="5,5,0,0">
+                    <Button Content="Rename Files"
+                           Command="{Binding RenameCommand}"
+                           Padding="15,8"/>
+                    <CheckBox Content="Rename All"
+                             IsChecked="{Binding RenameAll}"
+                             VerticalAlignment="Center"
+                             ToolTip.Tip="When checked, all files will be renamed including those already matching the pattern"/></StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Bottom: File List -->
+        <Border Grid.Row="1"
+                BorderBrush="#3F3F46"
+                BorderThickness="1"
+                Background="#1E1E1E">
+            <Grid RowDefinitions="Auto,*">
+                <TextBlock Grid.Row="0"
+                          Text="Files in Source Folder"
+                          FontSize="14"
+                          FontWeight="Bold"
+                          Margin="10,10,10,5"/>
+
+                <ScrollViewer Grid.Row="1"
+                             VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding FileList}"
+                                 Margin="10">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="#2D2D30"
+                                       BorderThickness="0,0,0,1"
+                                       Padding="5"
+                                       Margin="0,2">
+                                    <TextBlock Text="{Binding}"
+                                              FontFamily="Consolas"
+                                              FontSize="13"
+                                              Foreground="#CCCCCC"/>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

@@ -27,5 +27,9 @@ namespace ImageLabeller.Models
         public string ExtractClassNamePrefix { get; set; } = string.Empty;
         public int ExtractLastInFrame { get; set; } = 0;
         public int ExtractLastOutFrame { get; set; } = 0;
+        public string RenameSourceFolder { get; set; } = string.Empty;
+        public int RenameNextFileIndex { get; set; } = 1;
+        public string RenameSelectedClassName { get; set; } = string.Empty;
+        public bool RenameAll { get; set; } = false;
     }
 }

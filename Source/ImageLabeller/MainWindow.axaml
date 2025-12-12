@@ -26,6 +26,9 @@
         <DataTemplate DataType="vm:ExtractViewModel">
             <views:ExtractView/>
         </DataTemplate>
+        <DataTemplate DataType="vm:RenameViewModel">
+            <views:RenameView/>
+        </DataTemplate>
     </Window.DataTemplates>
 
     <DockPanel>
@@ -72,6 +75,14 @@
                         Command="{Binding NavigateToSort}"
                         Classes="MenuButton"
                         Classes.Selected="{Binding IsSortViewActive}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left"
+                        Padding="20,12"/>
+
+                <Button Content="Rename"
+                        Command="{Binding NavigateToRename}"
+                        Classes="MenuButton"
+                        Classes.Selected="{Binding IsRenameViewActive}"
                         HorizontalAlignment="Stretch"
                         HorizontalContentAlignment="Left"
                         Padding="20,12"/>
