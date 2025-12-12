@@ -34,6 +34,7 @@ namespace ImageLabeller.ViewModels
         private YoloAnnotation? _selectedAnnotation;
         private MainWindowViewModel? _mainViewModel;
         private string _modelStatus = "Ready";
+        private bool _autoMoveEnabled = false;
 
         public string SourceFolderPath
         {
@@ -80,6 +81,7 @@ namespace ImageLabeller.ViewModels
                 if (SetProperty(ref _labeledImageDestination, value))
                 {
                     SaveSettings();
+                    (MoveCurrentFileCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -92,6 +94,7 @@ namespace ImageLabeller.ViewModels
                 if (SetProperty(ref _labelFileDestination, value))
                 {
                     SaveSettings();
+                    (MoveCurrentFileCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -142,7 +145,13 @@ namespace ImageLabeller.ViewModels
         public ObservableCollection<YoloAnnotation> CurrentAnnotations
         {
             get => _currentAnnotations;
-            private set => SetProperty(ref _currentAnnotations, value);
+            private set
+            {
+                if (SetProperty(ref _currentAnnotations, value))
+                {
+                    (MoveCurrentFileCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                }
+            }
         }
 
         public YoloAnnotation? SelectedAnnotation
@@ -155,6 +164,18 @@ namespace ImageLabeller.ViewModels
         {
             get => _modelStatus;
             private set => SetProperty(ref _modelStatus, value);
+        }
+
+        public bool AutoMoveEnabled
+        {
+            get => _autoMoveEnabled;
+            set
+            {
+                if (SetProperty(ref _autoMoveEnabled, value))
+                {
+                    SaveSettings();
+                }
+            }
         }
 
         public bool HasPreviousImage => _currentImageIndex > 0;
@@ -170,6 +191,7 @@ namespace ImageLabeller.ViewModels
         public ICommand SelectAnnotationCommand { get; }
         public ICommand DeleteAnnotationCommand { get; }
         public ICommand ApplyModelCommand { get; }
+        public ICommand MoveCurrentFileCommand { get; }
 
         public LabelViewModel(MainWindowViewModel? mainViewModel = null)
         {
@@ -184,6 +206,7 @@ namespace ImageLabeller.ViewModels
             SelectAnnotationCommand = new RelayCommand<YoloAnnotation>(SelectAnnotation!);
             DeleteAnnotationCommand = new RelayCommand<YoloAnnotation>(DeleteAnnotation!);
             ApplyModelCommand = new RelayCommand(ApplyModel, () => CanApplyModel);
+            MoveCurrentFileCommand = new RelayCommand(ExecuteMoveCurrentFile, CanMoveCurrentFile);
 
             // Initialize selected class
             var classes = ImageClasses;
@@ -195,6 +218,7 @@ namespace ImageLabeller.ViewModels
                 _sourceFolderPath = _mainViewModel.Settings.LabelSourceFolder;
                 _labeledImageDestination = _mainViewModel.Settings.LabeledImageDestination;
                 _labelFileDestination = _mainViewModel.Settings.LabelFileDestination;
+                _autoMoveEnabled = _mainViewModel.Settings.LabelAutoMoveEnabled;
 
                 // If destination folders are empty, default to source folder
                 if (string.IsNullOrEmpty(_labeledImageDestination) && !string.IsNullOrEmpty(_sourceFolderPath))
@@ -419,6 +443,7 @@ namespace ImageLabeller.ViewModels
                 _mainViewModel.Settings.LabeledImageDestination = _labeledImageDestination;
                 _mainViewModel.Settings.LabelFileDestination = _labelFileDestination;
                 _mainViewModel.Settings.LabelSelectedClassId = SelectedClass.Id;
+                _mainViewModel.Settings.LabelAutoMoveEnabled = _autoMoveEnabled;
                 _mainViewModel.SaveSettings();
             }
         }
@@ -444,6 +469,7 @@ namespace ImageLabeller.ViewModels
         public void AddAnnotation(YoloAnnotation annotation)
         {
             CurrentAnnotations.Add(annotation);
+            (MoveCurrentFileCommand as RelayCommand)?.RaiseCanExecuteChanged();
             SaveCurrentAnnotations();
         }
 
@@ -459,6 +485,7 @@ namespace ImageLabeller.ViewModels
             {
                 SelectedAnnotation = null;
             }
+            (MoveCurrentFileCommand as RelayCommand)?.RaiseCanExecuteChanged();
             SaveCurrentAnnotations();
         }
 
@@ -474,8 +501,8 @@ namespace ImageLabeller.ViewModels
                 var lines = CurrentAnnotations.Select(a => a.ToString());
                 File.WriteAllLines(annotationPath, lines);
 
-                // If image has annotations and destination folders are different from source, move files
-                if (CurrentAnnotations.Count > 0)
+                // If auto-move is enabled, image has annotations, and destination folders are different from source, move files
+                if (_autoMoveEnabled && CurrentAnnotations.Count > 0)
                 {
                     var sourceFolder = Path.GetDirectoryName(imagePath);
                     var shouldMoveImage = !string.IsNullOrEmpty(_labeledImageDestination) &&
@@ -553,6 +580,109 @@ namespace ImageLabeller.ViewModels
             catch
             {
                 // Silently fail - in production, you'd want to show an error to the user
+            }
+        }
+
+        private bool CanMoveCurrentFile()
+        {
+            if (_currentImageIndex < 0 || _currentImageIndex >= _sourceImageFiles.Count)
+                return false;
+
+            if (CurrentAnnotations.Count == 0)
+                return false;
+
+            var imagePath = _sourceImageFiles[_currentImageIndex];
+            var sourceFolder = Path.GetDirectoryName(imagePath);
+            var shouldMoveImage = !string.IsNullOrEmpty(_labeledImageDestination) &&
+                                 !string.Equals(sourceFolder, _labeledImageDestination, StringComparison.OrdinalIgnoreCase);
+            var shouldMoveLabel = !string.IsNullOrEmpty(_labelFileDestination) &&
+                                 !string.Equals(sourceFolder, _labelFileDestination, StringComparison.OrdinalIgnoreCase);
+
+            return shouldMoveImage || shouldMoveLabel;
+        }
+
+        private void ExecuteMoveCurrentFile()
+        {
+            if (!CanMoveCurrentFile())
+                return;
+
+            try
+            {
+                // Save annotations first
+                SaveCurrentAnnotations();
+
+                var imagePath = _sourceImageFiles[_currentImageIndex];
+                var annotationPath = Path.ChangeExtension(imagePath, ".txt");
+                var sourceFolder = Path.GetDirectoryName(imagePath);
+                var shouldMoveImage = !string.IsNullOrEmpty(_labeledImageDestination) &&
+                                     !string.Equals(sourceFolder, _labeledImageDestination, StringComparison.OrdinalIgnoreCase);
+                var shouldMoveLabel = !string.IsNullOrEmpty(_labelFileDestination) &&
+                                     !string.Equals(sourceFolder, _labelFileDestination, StringComparison.OrdinalIgnoreCase);
+
+                // Ensure destination directories exist
+                if (shouldMoveImage && !Directory.Exists(_labeledImageDestination))
+                {
+                    Directory.CreateDirectory(_labeledImageDestination);
+                }
+                if (shouldMoveLabel && !Directory.Exists(_labelFileDestination))
+                {
+                    Directory.CreateDirectory(_labelFileDestination);
+                }
+
+                // Move image file
+                if (shouldMoveImage)
+                {
+                    var imageFileName = Path.GetFileName(imagePath);
+                    var destImagePath = Path.Combine(_labeledImageDestination, imageFileName);
+
+                    if (File.Exists(destImagePath))
+                    {
+                        File.Delete(destImagePath);
+                    }
+                    File.Move(imagePath, destImagePath);
+                }
+
+                // Move label file
+                if (shouldMoveLabel && File.Exists(annotationPath))
+                {
+                    var labelFileName = Path.GetFileName(annotationPath);
+                    var destLabelPath = Path.Combine(_labelFileDestination, labelFileName);
+
+                    if (File.Exists(destLabelPath))
+                    {
+                        File.Delete(destLabelPath);
+                    }
+                    File.Move(annotationPath, destLabelPath);
+                }
+
+                // Remove the image from the source list and load next image
+                _sourceImageFiles.RemoveAt(_currentImageIndex);
+
+                // Adjust current index and reload
+                if (_sourceImageFiles.Count == 0)
+                {
+                    // No more images
+                    _currentImageIndex = -1;
+                    CurrentImage?.Dispose();
+                    CurrentImage = null;
+                    CurrentAnnotations = new ObservableCollection<YoloAnnotation>();
+                }
+                else if (_currentImageIndex >= _sourceImageFiles.Count)
+                {
+                    // Was at end, go to new last image
+                    LoadImage(_sourceImageFiles.Count - 1);
+                }
+                else
+                {
+                    // Load the image that's now at the current index
+                    LoadImage(_currentImageIndex);
+                }
+
+                UpdateImageCount();
+            }
+            catch
+            {
+                // Silently fail
             }
         }
 

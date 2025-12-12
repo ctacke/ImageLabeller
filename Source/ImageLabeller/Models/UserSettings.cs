@@ -11,6 +11,7 @@ namespace ImageLabeller.Models
         public string LabeledImageDestination { get; set; } = string.Empty;
         public string LabelFileDestination { get; set; } = string.Empty;
         public int LabelSelectedClassId { get; set; } = 0;
+        public bool LabelAutoMoveEnabled { get; set; } = false;
         public List<string> ClassNames { get; set; } = new List<string>
         {
             "15", "20", "25", "30", "35", "40", "45", "50",

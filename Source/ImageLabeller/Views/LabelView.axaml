@@ -124,39 +124,66 @@
                        Margin="5,0,0,0"/>
             </Grid>
 
-            <!-- Labeled Image Destination -->
-            <Grid ColumnDefinitions="150,*,Auto" Height="35">
-                <TextBlock Text="Labeled Images To:"
-                          VerticalAlignment="Center"
-                          Margin="5,0"/>
-                <TextBox Grid.Column="1"
-                        Text="{Binding LabeledImageDestination}"
-                        IsReadOnly="True"
-                        VerticalContentAlignment="Center"
-                        Margin="5,0"/>
-                <Button Grid.Column="2"
-                       Content="Browse..."
-                       Command="{Binding BrowseLabeledImageDestinationCommand}"
-                       Width="100"
-                       Margin="5,0,0,0"/>
-            </Grid>
+            <!-- File Moves Section -->
+            <Border BorderBrush="#3F3F46"
+                   BorderThickness="1"
+                   Background="#252526"
+                   Padding="10"
+                   Margin="0,5,0,0">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="FILE MOVES"
+                              FontSize="12"
+                              FontWeight="Bold"
+                              Foreground="#808080"
+                              Margin="0,0,0,5"/>
 
-            <!-- Label File Destination -->
-            <Grid ColumnDefinitions="150,*,Auto" Height="35">
-                <TextBlock Text="Label Files To:"
-                          VerticalAlignment="Center"
-                          Margin="5,0"/>
-                <TextBox Grid.Column="1"
-                        Text="{Binding LabelFileDestination}"
-                        IsReadOnly="True"
-                        VerticalContentAlignment="Center"
-                        Margin="5,0"/>
-                <Button Grid.Column="2"
-                       Content="Browse..."
-                       Command="{Binding BrowseLabelFileDestinationCommand}"
-                       Width="100"
-                       Margin="5,0,0,0"/>
-            </Grid>
+                    <!-- Auto-Move Checkbox -->
+                    <CheckBox Content="Auto-move labeled files"
+                             IsChecked="{Binding AutoMoveEnabled}"
+                             Margin="0,0,0,5"/>
+
+                    <!-- Labeled Image Destination -->
+                    <Grid ColumnDefinitions="130,*,Auto" Height="32">
+                        <TextBlock Text="Images To:"
+                                  VerticalAlignment="Center"
+                                  Margin="0,0,5,0"/>
+                        <TextBox Grid.Column="1"
+                                Text="{Binding LabeledImageDestination}"
+                                IsReadOnly="True"
+                                VerticalContentAlignment="Center"
+                                Margin="0,0,5,0"/>
+                        <Button Grid.Column="2"
+                               Content="Browse..."
+                               Command="{Binding BrowseLabeledImageDestinationCommand}"
+                               Width="85"
+                               Padding="8,5"/>
+                    </Grid>
+
+                    <!-- Label File Destination -->
+                    <Grid ColumnDefinitions="130,*,Auto" Height="32">
+                        <TextBlock Text="Labels To:"
+                                  VerticalAlignment="Center"
+                                  Margin="0,0,5,0"/>
+                        <TextBox Grid.Column="1"
+                                Text="{Binding LabelFileDestination}"
+                                IsReadOnly="True"
+                                VerticalContentAlignment="Center"
+                                Margin="0,0,5,0"/>
+                        <Button Grid.Column="2"
+                               Content="Browse..."
+                               Command="{Binding BrowseLabelFileDestinationCommand}"
+                               Width="85"
+                               Padding="8,5"/>
+                    </Grid>
+
+                    <!-- Move Current File Button -->
+                    <Button Content="Move Current File"
+                           Command="{Binding MoveCurrentFileCommand}"
+                           HorizontalAlignment="Left"
+                           Padding="15,8"
+                           Margin="0,5,0,0"/>
+                </StackPanel>
+            </Border>
 
             <!-- Current Class Label -->
             <TextBlock Text="{Binding CurrentClassLabel}"
