@@ -107,6 +107,8 @@ namespace ImageLabeller.Views
             {
                 _viewModel = viewModel;
                 viewModel.SetFolderPickerCallback(BrowseForSourceFolder);
+                viewModel.SetLabeledImageDestinationCallback(BrowseForLabeledImageDestination);
+                viewModel.SetLabelFileDestinationCallback(BrowseForLabelFileDestination);
                 viewModel.PropertyChanged += OnViewModelPropertyChanged;
                 SubscribeToAnnotationsCollection();
             }
@@ -379,6 +381,16 @@ namespace ImageLabeller.Views
         private string? BrowseForSourceFolder()
         {
             return BrowseForFolder("Select Source Folder");
+        }
+
+        private string? BrowseForLabeledImageDestination()
+        {
+            return BrowseForFolder("Select Labeled Images Destination");
+        }
+
+        private string? BrowseForLabelFileDestination()
+        {
+            return BrowseForFolder("Select Label Files Destination");
         }
 
         private string? BrowseForFolder(string title)

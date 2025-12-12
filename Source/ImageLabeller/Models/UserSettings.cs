@@ -8,6 +8,8 @@ namespace ImageLabeller.Models
         public string SortSourceFolder { get; set; } = string.Empty;
         public string SortDestinationFolder { get; set; } = string.Empty;
         public string LabelSourceFolder { get; set; } = string.Empty;
+        public string LabeledImageDestination { get; set; } = string.Empty;
+        public string LabelFileDestination { get; set; } = string.Empty;
         public int LabelSelectedClassId { get; set; } = 0;
         public List<string> ClassNames { get; set; } = new List<string>
         {

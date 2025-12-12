@@ -23,6 +23,8 @@ namespace ImageLabeller.ViewModels
         private static readonly string[] SupportedExtensions = { ".jpg", ".jpeg", ".png" };
 
         private string _sourceFolderPath = string.Empty;
+        private string _labeledImageDestination = string.Empty;
+        private string _labelFileDestination = string.Empty;
         private Bitmap? _currentImage;
         private int _currentImageIndex = -1;
         private List<string> _sourceImageFiles = new();
@@ -40,7 +42,41 @@ namespace ImageLabeller.ViewModels
             {
                 if (SetProperty(ref _sourceFolderPath, value))
                 {
+                    // Auto-fill destination folders if they're empty
+                    if (string.IsNullOrEmpty(_labeledImageDestination))
+                    {
+                        LabeledImageDestination = value;
+                    }
+                    if (string.IsNullOrEmpty(_labelFileDestination))
+                    {
+                        LabelFileDestination = value;
+                    }
+
                     LoadImagesFromSource();
+                    SaveSettings();
+                }
+            }
+        }
+
+        public string LabeledImageDestination
+        {
+            get => _labeledImageDestination;
+            set
+            {
+                if (SetProperty(ref _labeledImageDestination, value))
+                {
+                    SaveSettings();
+                }
+            }
+        }
+
+        public string LabelFileDestination
+        {
+            get => _labelFileDestination;
+            set
+            {
+                if (SetProperty(ref _labelFileDestination, value))
+                {
                     SaveSettings();
                 }
             }
@@ -112,6 +148,8 @@ namespace ImageLabeller.ViewModels
         public bool CanApplyModel => _mainViewModel?.ModelViewModel?.HasModel == true && CurrentImage != null;
 
         public ICommand BrowseSourceFolderCommand { get; }
+        public ICommand BrowseLabeledImageDestinationCommand { get; }
+        public ICommand BrowseLabelFileDestinationCommand { get; }
         public ICommand SelectClassCommand { get; }
         public ICommand NextImageCommand { get; }
         public ICommand PreviousImageCommand { get; }
@@ -124,6 +162,8 @@ namespace ImageLabeller.ViewModels
             _mainViewModel = mainViewModel;
 
             BrowseSourceFolderCommand = new RelayCommand(() => { });
+            BrowseLabeledImageDestinationCommand = new RelayCommand(() => { });
+            BrowseLabelFileDestinationCommand = new RelayCommand(() => { });
             SelectClassCommand = new RelayCommand<ImageClass>(SelectClass!);
             NextImageCommand = new RelayCommand(NavigateNext, () => HasNextImage);
             PreviousImageCommand = new RelayCommand(NavigatePrevious, () => HasPreviousImage);
@@ -139,6 +179,19 @@ namespace ImageLabeller.ViewModels
             if (_mainViewModel != null)
             {
                 _sourceFolderPath = _mainViewModel.Settings.LabelSourceFolder;
+                _labeledImageDestination = _mainViewModel.Settings.LabeledImageDestination;
+                _labelFileDestination = _mainViewModel.Settings.LabelFileDestination;
+
+                // If destination folders are empty, default to source folder
+                if (string.IsNullOrEmpty(_labeledImageDestination) && !string.IsNullOrEmpty(_sourceFolderPath))
+                {
+                    _labeledImageDestination = _sourceFolderPath;
+                }
+                if (string.IsNullOrEmpty(_labelFileDestination) && !string.IsNullOrEmpty(_sourceFolderPath))
+                {
+                    _labelFileDestination = _sourceFolderPath;
+                }
+
                 var savedClassId = _mainViewModel.Settings.LabelSelectedClassId;
                 _selectedClass = ImageClasses.FirstOrDefault(c => c.Id == savedClassId) ?? _selectedClass;
 
@@ -171,6 +224,30 @@ namespace ImageLabeller.ViewModels
                 if (!string.IsNullOrEmpty(folder))
                 {
                     SourceFolderPath = folder;
+                }
+            });
+        }
+
+        public void SetLabeledImageDestinationCallback(Func<string?> browseLabeledImageDestination)
+        {
+            (BrowseLabeledImageDestinationCommand as RelayCommand)!.UpdateExecute(() =>
+            {
+                var folder = browseLabeledImageDestination();
+                if (!string.IsNullOrEmpty(folder))
+                {
+                    LabeledImageDestination = folder;
+                }
+            });
+        }
+
+        public void SetLabelFileDestinationCallback(Func<string?> browseLabelFileDestination)
+        {
+            (BrowseLabelFileDestinationCommand as RelayCommand)!.UpdateExecute(() =>
+            {
+                var folder = browseLabelFileDestination();
+                if (!string.IsNullOrEmpty(folder))
+                {
+                    LabelFileDestination = folder;
                 }
             });
         }
@@ -325,6 +402,8 @@ namespace ImageLabeller.ViewModels
             if (_mainViewModel != null)
             {
                 _mainViewModel.Settings.LabelSourceFolder = _sourceFolderPath;
+                _mainViewModel.Settings.LabeledImageDestination = _labeledImageDestination;
+                _mainViewModel.Settings.LabelFileDestination = _labelFileDestination;
                 _mainViewModel.Settings.LabelSelectedClassId = SelectedClass.Id;
                 _mainViewModel.SaveSettings();
             }
@@ -380,6 +459,82 @@ namespace ImageLabeller.ViewModels
                 var annotationPath = Path.ChangeExtension(imagePath, ".txt");
                 var lines = CurrentAnnotations.Select(a => a.ToString());
                 File.WriteAllLines(annotationPath, lines);
+
+                // If image has annotations and destination folders are different from source, move files
+                if (CurrentAnnotations.Count > 0)
+                {
+                    var sourceFolder = Path.GetDirectoryName(imagePath);
+                    var shouldMoveImage = !string.IsNullOrEmpty(_labeledImageDestination) &&
+                                         !string.Equals(sourceFolder, _labeledImageDestination, StringComparison.OrdinalIgnoreCase);
+                    var shouldMoveLabel = !string.IsNullOrEmpty(_labelFileDestination) &&
+                                         !string.Equals(sourceFolder, _labelFileDestination, StringComparison.OrdinalIgnoreCase);
+
+                    if (shouldMoveImage || shouldMoveLabel)
+                    {
+                        // Ensure destination directories exist
+                        if (shouldMoveImage && !Directory.Exists(_labeledImageDestination))
+                        {
+                            Directory.CreateDirectory(_labeledImageDestination);
+                        }
+                        if (shouldMoveLabel && !Directory.Exists(_labelFileDestination))
+                        {
+                            Directory.CreateDirectory(_labelFileDestination);
+                        }
+
+                        // Move image file
+                        if (shouldMoveImage)
+                        {
+                            var imageFileName = Path.GetFileName(imagePath);
+                            var destImagePath = Path.Combine(_labeledImageDestination, imageFileName);
+
+                            // If destination file exists, delete it first
+                            if (File.Exists(destImagePath))
+                            {
+                                File.Delete(destImagePath);
+                            }
+                            File.Move(imagePath, destImagePath);
+                        }
+
+                        // Move label file
+                        if (shouldMoveLabel)
+                        {
+                            var labelFileName = Path.GetFileName(annotationPath);
+                            var destLabelPath = Path.Combine(_labelFileDestination, labelFileName);
+
+                            // If destination file exists, delete it first
+                            if (File.Exists(destLabelPath))
+                            {
+                                File.Delete(destLabelPath);
+                            }
+                            File.Move(annotationPath, destLabelPath);
+                        }
+
+                        // Remove the image from the source list and load next image
+                        _sourceImageFiles.RemoveAt(_currentImageIndex);
+
+                        // Adjust current index and reload
+                        if (_sourceImageFiles.Count == 0)
+                        {
+                            // No more images
+                            _currentImageIndex = -1;
+                            CurrentImage?.Dispose();
+                            CurrentImage = null;
+                            CurrentAnnotations = new ObservableCollection<YoloAnnotation>();
+                        }
+                        else if (_currentImageIndex >= _sourceImageFiles.Count)
+                        {
+                            // Was at end, go to new last image
+                            LoadImage(_sourceImageFiles.Count - 1);
+                        }
+                        else
+                        {
+                            // Stay at same index (which now points to next image)
+                            LoadImage(_currentImageIndex);
+                        }
+
+                        UpdateImageCount();
+                    }
+                }
             }
             catch
             {

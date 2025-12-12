@@ -124,6 +124,40 @@
                        Margin="5,0,0,0"/>
             </Grid>
 
+            <!-- Labeled Image Destination -->
+            <Grid ColumnDefinitions="150,*,Auto" Height="35">
+                <TextBlock Text="Labeled Images To:"
+                          VerticalAlignment="Center"
+                          Margin="5,0"/>
+                <TextBox Grid.Column="1"
+                        Text="{Binding LabeledImageDestination}"
+                        IsReadOnly="True"
+                        VerticalContentAlignment="Center"
+                        Margin="5,0"/>
+                <Button Grid.Column="2"
+                       Content="Browse..."
+                       Command="{Binding BrowseLabeledImageDestinationCommand}"
+                       Width="100"
+                       Margin="5,0,0,0"/>
+            </Grid>
+
+            <!-- Label File Destination -->
+            <Grid ColumnDefinitions="150,*,Auto" Height="35">
+                <TextBlock Text="Label Files To:"
+                          VerticalAlignment="Center"
+                          Margin="5,0"/>
+                <TextBox Grid.Column="1"
+                        Text="{Binding LabelFileDestination}"
+                        IsReadOnly="True"
+                        VerticalContentAlignment="Center"
+                        Margin="5,0"/>
+                <Button Grid.Column="2"
+                       Content="Browse..."
+                       Command="{Binding BrowseLabelFileDestinationCommand}"
+                       Width="100"
+                       Margin="5,0,0,0"/>
+            </Grid>
+
             <!-- Current Class Label -->
             <TextBlock Text="{Binding CurrentClassLabel}"
                       FontSize="16"
