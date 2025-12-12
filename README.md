@@ -30,6 +30,12 @@ ImageLabeller is built for **single-user workflows** and handles the most common
 - Each class gets a unique color for visual distinction
 - Export/import your class definitions
 
+### Video Frame Extraction
+- Quickly view MP4 video files
+- Set in and out points for extraction
+- Define a class name to prefix your frame images
+- Click a button to extract frames
+
 ### 📂 **Image Sorting**
 - Quickly sort images into class-specific folders
 - Navigate through images with keyboard shortcuts (number keys + arrow keys)
@@ -52,14 +58,16 @@ ImageLabeller is built for **single-user workflows** and handles the most common
 
 ## Screenshots
 
+### Video frame extraction:
+![frame extraction](Design/frame-extraction.png)
 ### Edit your classes:
 ![class editing](Design/screen-classes.png)
 ### Sort your images
-![class editing](Design/screen-sort.png)
+![image sorting](Design/screen-sort.png)
 ### Label your images (auto-label with your own model if you have one!)
-![class editing](Design/screen-label.png)
+![image labelling](Design/screen-label.png)
 ### Test your model
-![class editing](Design/screen-model.png)
+![model testing](Design/screen-model.png)
 
 ## Getting Started
 
