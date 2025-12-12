@@ -28,7 +28,18 @@
         </DataTemplate>
     </Window.DataTemplates>
 
-    <Grid ColumnDefinitions="200,*">
+    <DockPanel>
+        <!-- Menu Bar -->
+        <Menu DockPanel.Dock="Top" Background="#1E1E1E">
+            <MenuItem Header="Settings" Foreground="#CCCCCC">
+                <MenuItem Header="Reveal Config File"
+                         Command="{Binding RevealConfigCommand}"
+                         ToolTip.Tip="Open the user.settings file location in your file explorer"/>
+            </MenuItem>
+        </Menu>
+
+        <!-- Main Content -->
+        <Grid ColumnDefinitions="200,*">
         <!-- Left Menu -->
         <Border Grid.Column="0"
                 Background="#1E1E1E"
@@ -87,7 +98,8 @@
         <ContentControl Grid.Column="1"
                        Content="{Binding CurrentView}"
                        Background="#252526"/>
-    </Grid>
+        </Grid>
+    </DockPanel>
 
     <Window.Styles>
         <Style Selector="Button.MenuButton">

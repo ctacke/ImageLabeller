@@ -1,5 +1,6 @@
 using ImageLabeller.Models;
 using ImageLabeller.Services;
+using System;
 using System.Windows.Input;
 
 namespace ImageLabeller.ViewModels
@@ -45,6 +46,7 @@ namespace ImageLabeller.ViewModels
         public ICommand NavigateToLabel { get; }
         public ICommand NavigateToModel { get; }
         public ICommand NavigateToExtract { get; }
+        public ICommand RevealConfigCommand { get; }
 
         public MainWindowViewModel()
         {
@@ -98,6 +100,8 @@ namespace ImageLabeller.ViewModels
                 }
             });
 
+            RevealConfigCommand = new RelayCommand(RevealConfig);
+
             // Restore last active view or default to Sort
             RestoreLastView();
         }
@@ -149,6 +153,39 @@ namespace ImageLabeller.ViewModels
         {
             _sortViewModel.RefreshClasses();
             _labelViewModel.RefreshClasses();
+        }
+
+        private void RevealConfig()
+        {
+            try
+            {
+                var configPath = System.IO.Path.Combine(
+                    System.AppDomain.CurrentDomain.BaseDirectory,
+                    "user.settings");
+
+                if (!System.IO.File.Exists(configPath))
+                    return;
+
+                // Open file explorer and select the file
+                if (OperatingSystem.IsWindows())
+                {
+                    System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{configPath}\"");
+                }
+                else if (OperatingSystem.IsMacOS())
+                {
+                    System.Diagnostics.Process.Start("open", $"-R \"{configPath}\"");
+                }
+                else if (OperatingSystem.IsLinux())
+                {
+                    // On Linux, open the containing folder
+                    var folderPath = System.IO.Path.GetDirectoryName(configPath);
+                    System.Diagnostics.Process.Start("xdg-open", $"\"{folderPath}\"");
+                }
+            }
+            catch
+            {
+                // Silently fail if we can't open the file explorer
+            }
         }
     }
 }
