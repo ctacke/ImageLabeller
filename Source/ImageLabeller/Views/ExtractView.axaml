@@ -104,15 +104,38 @@
                       Foreground="#CCCCCC"
                       FontFamily="Consolas"/>
 
-            <!-- Timeline Slider -->
-            <Slider Grid.Column="1"
-                    Minimum="0"
-                    Maximum="{Binding TotalFrames}"
-                    Value="{Binding CurrentFrameIndex, Mode=TwoWay}"
-                    IsSnapToTickEnabled="True"
-                    TickFrequency="1"
-                    Margin="10,0"
-                    IsEnabled="{Binding IsVideoLoaded}"/>
+            <!-- Timeline Slider with Markers -->
+            <Grid Grid.Column="1" Margin="10,0" RowDefinitions="Auto,20">
+                <Slider Grid.Row="0"
+                        x:Name="TimelineSlider"
+                        Minimum="0"
+                        Maximum="{Binding TotalFrames}"
+                        Value="{Binding CurrentFrameIndex, Mode=TwoWay}"
+                        IsSnapToTickEnabled="True"
+                        TickFrequency="1"
+                        IsEnabled="{Binding IsVideoLoaded}"/>
+
+                <!-- In/Out Point Markers -->
+                <Canvas Grid.Row="1" x:Name="MarkerCanvas" Height="20" Background="Transparent">
+                    <!-- In Point Marker (Green Pentagon - Triangle on Square) -->
+                    <Path x:Name="InMarker"
+                          Fill="#4EC9B0"
+                          Stroke="#2A7D6C"
+                          StrokeThickness="1"
+                          IsVisible="{Binding InPointFrame, Converter={x:Static ObjectConverters.IsNotNull}}"
+                          Data="M 6,0 L 2,6 L 2,14 L 10,14 L 10,6 Z"
+                          ToolTip.Tip="{Binding InPointDisplay}"/>
+
+                    <!-- Out Point Marker (Orange Pentagon - Triangle on Square) -->
+                    <Path x:Name="OutMarker"
+                          Fill="#CE9178"
+                          Stroke="#8B5A3C"
+                          StrokeThickness="1"
+                          IsVisible="{Binding OutPointFrame, Converter={x:Static ObjectConverters.IsNotNull}}"
+                          Data="M 6,0 L 2,6 L 2,14 L 10,14 L 10,6 Z"
+                          ToolTip.Tip="{Binding OutPointDisplay}"/>
+                </Canvas>
+            </Grid>
 
             <TextBlock Grid.Column="2"
                       Text="{Binding DurationDisplay}"

@@ -322,12 +322,26 @@ namespace ImageLabeller.ViewModels
 
         private void SetInPoint()
         {
+            // Validate that in point is before out point (if out point is set)
+            if (OutPointFrame.HasValue && CurrentFrameIndex >= OutPointFrame.Value)
+            {
+                StatusMessage = $"Error: In point must be before Out point (frame {OutPointFrame.Value})";
+                return;
+            }
+
             InPointFrame = CurrentFrameIndex;
             StatusMessage = $"In point set to frame {CurrentFrameIndex} ({FormatFrameTime(CurrentFrameIndex)})";
         }
 
         private void SetOutPoint()
         {
+            // Validate that out point is after in point (if in point is set)
+            if (InPointFrame.HasValue && CurrentFrameIndex <= InPointFrame.Value)
+            {
+                StatusMessage = $"Error: Out point must be after In point (frame {InPointFrame.Value})";
+                return;
+            }
+
             OutPointFrame = CurrentFrameIndex;
             StatusMessage = $"Out point set to frame {CurrentFrameIndex} ({FormatFrameTime(CurrentFrameIndex)})";
         }
