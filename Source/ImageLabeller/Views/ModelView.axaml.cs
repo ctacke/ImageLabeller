@@ -1,9 +1,11 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using ImageLabeller.ViewModels;
+using System;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
@@ -13,6 +15,9 @@ namespace ImageLabeller.Views
     public partial class ModelView : UserControl
     {
         private ModelViewModel? _viewModel;
+        private const double MinZoom = 0.1;
+        private const double MaxZoom = 10.0;
+        private const double ZoomStep = 0.1;
 
         public ModelView()
         {
@@ -20,8 +25,36 @@ namespace ImageLabeller.Views
             DataContextChanged += OnDataContextChanged;
             InferenceImage.SizeChanged += OnImageSizeChanged;
             InferenceCanvas.SizeChanged += OnImageSizeChanged;
+            Loaded += (s, e) => Focus();
 
             RedrawDetections();
+        }
+
+        private void OnKeyDown(object? sender, KeyEventArgs e)
+        {
+            if (DataContext is not ModelViewModel viewModel)
+                return;
+
+            // Handle Left/Right arrow keys for navigation
+            if (e.Key == Key.Left)
+            {
+                if (viewModel.PreviousImageCommand.CanExecute(null))
+                {
+                    viewModel.PreviousImageCommand.Execute(null);
+                    e.Handled = true;
+                }
+                return;
+            }
+
+            if (e.Key == Key.Right)
+            {
+                if (viewModel.NextImageCommand.CanExecute(null))
+                {
+                    viewModel.NextImageCommand.Execute(null);
+                    e.Handled = true;
+                }
+                return;
+            }
         }
 
         private void OnDataContextChanged(object? sender, System.EventArgs e)
@@ -48,6 +81,8 @@ namespace ImageLabeller.Views
         {
             if (e.PropertyName == nameof(ModelViewModel.CurrentImage))
             {
+                // Reset zoom when a new image is loaded
+                ResetZoom();
                 RedrawDetections();
             }
         }
@@ -202,6 +237,71 @@ namespace ImageLabeller.Views
                 Canvas.SetTop(label, y - labelHeight + 2);
                 InferenceCanvas.Children.Add(label);
             }
+        }
+
+        private void ResetZoom()
+        {
+            var zoomContainer = this.FindControl<Grid>("ZoomContainer");
+            if (zoomContainer != null)
+            {
+                if (zoomContainer.RenderTransform is ScaleTransform scaleTransform)
+                {
+                    scaleTransform.ScaleX = 1.0;
+                    scaleTransform.ScaleY = 1.0;
+                }
+
+                // Reset transform origin to default (center)
+                zoomContainer.RenderTransformOrigin = new Avalonia.RelativePoint(0.5, 0.5, Avalonia.RelativeUnit.Relative);
+            }
+        }
+
+        private void OnImagePointerWheelChanged(object? sender, PointerWheelEventArgs e)
+        {
+            // Only zoom if Ctrl is pressed
+            if (!e.KeyModifiers.HasFlag(KeyModifiers.Control))
+                return;
+
+            var zoomContainer = this.FindControl<Grid>("ZoomContainer");
+            if (zoomContainer == null)
+                return;
+
+            var scaleTransform = zoomContainer.RenderTransform as ScaleTransform;
+            if (scaleTransform == null)
+                return;
+
+            var delta = e.Delta.Y;
+            var currentScale = scaleTransform.ScaleX;
+            var newScale = currentScale + (delta * ZoomStep);
+
+            // Clamp zoom level
+            newScale = Math.Clamp(newScale, MinZoom, MaxZoom);
+
+            if (Math.Abs(newScale - currentScale) < 0.001)
+                return;
+
+            // Get mouse position relative to the ZoomContainer
+            var mousePosition = e.GetPosition(zoomContainer);
+
+            // Calculate the transform origin as a ratio of the container size
+            // This tells the ScaleTransform where to zoom from
+            var bounds = zoomContainer.Bounds;
+            if (bounds.Width > 0 && bounds.Height > 0)
+            {
+                var originX = mousePosition.X / bounds.Width;
+                var originY = mousePosition.Y / bounds.Height;
+
+                // Set the transform origin to the mouse position
+                zoomContainer.RenderTransformOrigin = new Avalonia.RelativePoint(originX, originY, Avalonia.RelativeUnit.Relative);
+            }
+
+            // Apply the new scale
+            scaleTransform.ScaleX = newScale;
+            scaleTransform.ScaleY = newScale;
+
+            // Redraw detections to match new zoom level
+            RedrawDetections();
+
+            e.Handled = true;
         }
     }
 }

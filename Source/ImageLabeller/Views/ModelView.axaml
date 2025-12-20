@@ -5,7 +5,9 @@
              xmlns:vm="using:ImageLabeller.ViewModels"
              mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
              x:Class="ImageLabeller.Views.ModelView"
-             x:DataType="vm:ModelViewModel">
+             x:DataType="vm:ModelViewModel"
+             Focusable="True"
+             KeyDown="OnKeyDown">
     <Grid RowDefinitions="Auto,*,Auto" Margin="10">
         <!-- Top: File Pickers -->
         <StackPanel Grid.Row="0" Spacing="10" Margin="0,0,0,10">
@@ -49,26 +51,36 @@
                BorderBrush="#3F3F46"
                BorderThickness="1"
                Background="#1E1E1E">
-            <Grid>
-                <!-- Image display -->
-                <Image x:Name="InferenceImage"
-                      Source="{Binding CurrentImage}"
-                      Stretch="Uniform"
-                      IsVisible="{Binding CurrentImage, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+            <ScrollViewer x:Name="ImageScrollViewer"
+                         HorizontalScrollBarVisibility="Auto"
+                         VerticalScrollBarVisibility="Auto">
+                <Grid x:Name="ZoomContainer"
+                     PointerWheelChanged="OnImagePointerWheelChanged"
+                     Background="Transparent">
+                    <Grid.RenderTransform>
+                        <ScaleTransform ScaleX="1" ScaleY="1"/>
+                    </Grid.RenderTransform>
 
-                <!-- Canvas overlay for inference results -->
-                <Canvas x:Name="InferenceCanvas"
-                       Background="Transparent"
-                       IsVisible="{Binding CurrentImage, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                    <!-- Image display -->
+                    <Image x:Name="InferenceImage"
+                          Source="{Binding CurrentImage}"
+                          Stretch="Uniform"
+                          IsVisible="{Binding CurrentImage, Converter={x:Static ObjectConverters.IsNotNull}}"/>
 
-                <!-- "No image" message -->
-                <TextBlock Text="No image loaded"
-                          FontSize="24"
-                          Foreground="#808080"
-                          HorizontalAlignment="Center"
-                          VerticalAlignment="Center"
-                          IsVisible="{Binding CurrentImage, Converter={x:Static ObjectConverters.IsNull}}"/>
-            </Grid>
+                    <!-- Canvas overlay for inference results -->
+                    <Canvas x:Name="InferenceCanvas"
+                           Background="Transparent"
+                           IsVisible="{Binding CurrentImage, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+
+                    <!-- "No image" message -->
+                    <TextBlock Text="No image loaded"
+                              FontSize="24"
+                              Foreground="#808080"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              IsVisible="{Binding CurrentImage, Converter={x:Static ObjectConverters.IsNull}}"/>
+                </Grid>
+            </ScrollViewer>
         </Border>
 
         <!-- Bottom: Navigation -->
